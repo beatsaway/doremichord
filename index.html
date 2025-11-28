@@ -19,24 +19,28 @@
 
         #instructions {
             position: fixed;
-            bottom: 20px;
+            bottom: 15px;
             left: 50%;
             transform: translateX(-50%);
-            color: white;
+            color: rgba(255, 255, 255, 0.9);
             text-align: center;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px 25px;
-            border-radius: 10px;
-            font-size: 14px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 13px;
             z-index: 1000;
+            backdrop-filter: blur(10px);
+            line-height: 1.6;
         }
 
         #instructions kbd {
-            background: #333;
-            padding: 3px 8px;
-            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 2px 6px;
+            border-radius: 3px;
             font-family: monospace;
-            margin: 0 2px;
+            margin: 0 1px;
+            font-size: 11px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         #instructions kbd.active {
@@ -45,21 +49,33 @@
         }
 
         #extensions-status {
-            margin-top: 8px;
-            font-size: 12px;
-            opacity: 0.8;
+            margin-top: 6px;
+            font-size: 11px;
+            opacity: 0.7;
+        }
+
+        .plate-label {
+            position: fixed;
+            color: white;
+            font-size: 20px;
+            font-weight: 600;
+            text-shadow: 0 0 8px rgba(0, 0, 0, 0.9), 0 2px 6px rgba(0, 0, 0, 0.7);
+            pointer-events: none;
+            z-index: 100;
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            transform: translate(-50%, -50%);
+            opacity: 0.95;
+            letter-spacing: 0.5px;
         }
     </style>
 </head>
 <body>
     <div id="scene-container"></div>
     <div id="instructions">
-        Press <kbd>A</kbd> <kbd>S</kbd> for Lower La, Lower Ti<br>
-        Press <kbd>D</kbd> <kbd>F</kbd> <kbd>G</kbd> <kbd>H</kbd> <kbd>J</kbd> <kbd>K</kbd> to play Do, Re, Mi, Fa, So, La<br>
-        Hold <kbd>Shift</kbd> + key to play chords<br>
-        Press <kbd>Enter</kbd> to cycle chord modes<br>
-        Press <kbd>Space</kbd> to toggle bass mode<br>
-        <div id="extensions-status">Chord mode: <span id="mode-status">Diatonic</span> | Bass: <span id="bass-status">off</span></div>
+        <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>F</kbd> <kbd>G</kbd> <kbd>H</kbd> <kbd>J</kbd> <kbd>K</kbd> to play<br>
+        <kbd>Shift</kbd> + key for chords | <kbd>Enter</kbd> mode | <kbd>Space</kbd> bass<br>
+        <div id="extensions-status"><span id="mode-status">Diatonic</span> | Bass: <span id="bass-status">off</span></div>
     </div>
     
     <script src="three.min.js"></script>
@@ -133,6 +149,15 @@
             plate.userData.note = note;
             plate.userData.originalColor = note.color;
             plate.userData.originalEmissive = note.color;
+            
+            // Create label for the plate
+            const label = document.createElement('div');
+            label.className = 'plate-label';
+            // Remove "Lower " prefix from labels for cleaner display
+            label.textContent = note.name.replace('Lower ', '');
+            label.id = `label-${i}`;
+            document.body.appendChild(label);
+            plate.userData.label = label;
             
             scene.add(plate);
             plates.push(plate);
@@ -290,6 +315,29 @@
             });
         });
         
+        // Function to update label positions based on 3D plate positions
+        function updateLabelPositions() {
+            plates.forEach((plate) => {
+                const label = plate.userData.label;
+                if (!label) return;
+                
+                // Get 3D position
+                const vector = new THREE.Vector3();
+                plate.getWorldPosition(vector);
+                
+                // Project to 2D screen coordinates
+                vector.project(camera);
+                
+                // Convert to pixel coordinates
+                const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
+                const y = (-vector.y * 0.5 + 0.5) * window.innerHeight;
+                
+                // Update label position
+                label.style.left = x + 'px';
+                label.style.top = y + 'px';
+            });
+        }
+        
         // Animation loop
         function animate() {
             requestAnimationFrame(animate);
@@ -310,6 +358,9 @@
                 }
             });
             
+            // Update label positions
+            updateLabelPositions();
+            
             renderer.render(scene, camera);
         }
 
@@ -318,6 +369,7 @@
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
                 renderer.setSize(window.innerWidth, window.innerHeight);
+                updateLabelPositions();
             });
             
         // Start animation
