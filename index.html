@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Musical Plates</title>
+    <style>
+        body {
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden;
+            background: #000;
+            font-family: Arial, sans-serif;
+        }
+
+        #scene-container { 
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #instructions {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px 25px;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 1000;
+        }
+
+        #instructions kbd {
+            background: #333;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 0 2px;
+        }
+
+        #instructions kbd.active {
+            background: #4ecdc4;
+            color: #000;
+        }
+
+        #extensions-status {
+            margin-top: 8px;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div id="scene-container"></div>
+    <div id="instructions">
+        Press <kbd>A</kbd> <kbd>S</kbd> for Lower La, Lower Ti<br>
+        Press <kbd>D</kbd> <kbd>F</kbd> <kbd>G</kbd> <kbd>H</kbd> <kbd>J</kbd> <kbd>K</kbd> to play Do, Re, Mi, Fa, So, La<br>
+        Hold <kbd>Shift</kbd> + key to play chords<br>
+        Press <kbd>Enter</kbd> to cycle chord modes<br>
+        Press <kbd>Space</kbd> to toggle bass mode<br>
+        <div id="extensions-status">Chord mode: <span id="mode-status">Diatonic</span> | Bass: <span id="bass-status">off</span></div>
+    </div>
+    
+    <script src="three.min.js"></script>
+    <script src="watersynth.js"></script>
+    <script src="audio.js"></script>
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2e);
+        
+        const camera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('scene-container').appendChild(renderer.domElement);
+        
+        // Position camera
+        camera.position.set(0, 0, 5);
+        camera.lookAt(0, 0, 0);
+        
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(5, 5, 5);
+        scene.add(directionalLight);
+        
+        // Audio functions and notes are now in audio.js
+        
+        // Create floating circular plates
+        const plates = [];
+        const plateCount = 8; // Lower La, Lower Ti, Do, Re, Mi, Fa, So, La
+        
+        for (let i = 0; i < plateCount; i++) {
+            const note = MAJOR_SCALE_RATIOS[i];
+            
+            // Create a circular plate using CylinderGeometry with very small height
+            const geometry = new THREE.CylinderGeometry(0.8, 0.8, 0.1, 32);
+            const material = new THREE.MeshStandardMaterial({
+                color: note.color,
+                metalness: 0.3,
+                roughness: 0.4,
+                emissive: note.color,
+                emissiveIntensity: 0
+            });
+            
+            const plate = new THREE.Mesh(geometry, material);
+            
+            // Position plates in order of the musical scale (Lower La, Lower Ti, Do, Re, Mi, Fa, So, La)
+            // Arrange them in a row from left to right, slightly curved
+            const spacing = 1.5;
+            const startX = -(plateCount - 1) * spacing / 2;
+            plate.position.x = startX + i * spacing;
+            plate.position.y = Math.sin(i * 0.3) * 0.5; // Slight vertical curve
+            plate.position.z = -2;
+            
+            // Rotate to face camera (lay flat)
+            plate.rotation.x = Math.PI / 2;
+            
+            // Store animation properties and note data
+            plate.userData.floatSpeed = 0.5 + Math.random() * 0.5;
+            plate.userData.floatAmplitude = 0.3 + Math.random() * 0.2;
+            plate.userData.rotationSpeed = 0.01 + Math.random() * 0.02;
+            plate.userData.initialY = plate.position.y;
+            plate.userData.note = note;
+            plate.userData.originalColor = note.color;
+            plate.userData.originalEmissive = note.color;
+            
+            scene.add(plate);
+            plates.push(plate);
+        }
+        
+        // Keyboard controls
+        const keyMap = {};
+        MAJOR_SCALE_RATIOS.forEach(note => {
+            if (note.key) {
+                keyMap[note.key] = note;
+            }
+        });
+        
+        // Track which keys are currently pressed (to prevent repeat triggers)
+        const pressedKeys = new Set();
+        
+        // Track chord mode (cycle through modes with Enter)
+        let chordModeIndex = 0;
+        
+        // Function to update chord mode display
+        function updateModeDisplay() {
+            const modeStatus = document.getElementById('mode-status');
+            const currentMode = CHORD_MODES[chordModeIndex];
+            
+            modeStatus.textContent = currentMode.name;
+            modeStatus.style.color = chordModeIndex === 0 ? '#999' : '#4ecdc4';
+            
+            // Update visual state of Enter key
+            const allKeys = document.querySelectorAll('#instructions kbd');
+            allKeys.forEach(kbd => {
+                if (kbd.textContent.trim().toLowerCase() === 'enter') {
+                    if (chordModeIndex === 0) {
+                        kbd.classList.remove('active');
+                    } else {
+                        kbd.classList.add('active');
+                    }
+                }
+            });
+        }
+        
+        // Function to update bass mode display
+        function updateBassDisplay() {
+            const bassStatus = document.getElementById('bass-status');
+            bassStatus.textContent = window.bassMode ? 'on' : 'off';
+            bassStatus.style.color = window.bassMode ? '#4ecdc4' : '#999';
+            
+            // Update visual state of Space key
+            const allKeys = document.querySelectorAll('#instructions kbd');
+            allKeys.forEach(kbd => {
+                if (kbd.textContent.trim().toLowerCase() === 'space') {
+                    if (window.bassMode) {
+                        kbd.classList.add('active');
+                    } else {
+                        kbd.classList.remove('active');
+                    }
+                }
+            });
+        }
+        
+        // Handle chord mode cycle (Enter key)
+        document.addEventListener('keydown', (event) => {
+            const key = event.key.toLowerCase();
+            
+            if (event.key === 'Enter' && !event.repeat) {
+                chordModeIndex = (chordModeIndex + 1) % CHORD_MODES.length;
+                updateModeDisplay();
+                return;
+            }
+            
+            if (event.key === ' ' && !event.repeat) {
+                event.preventDefault(); // Prevent page scroll
+                window.bassMode = !window.bassMode;
+                updateBassDisplay();
+                return;
+            }
+        });
+        
+        // Initialize mode display
+        updateModeDisplay();
+        updateBassDisplay();
+        
+        // Resume audio on any user interaction
+        document.addEventListener('click', resumeAudioContext, { once: true });
+        document.addEventListener('keydown', resumeAudioContext, { once: true });
+        
+        // Attack phase: Start note/chord when key is pressed
+        document.addEventListener('keydown', (event) => {
+            const key = event.key.toLowerCase();
+            
+            // Prevent repeat triggers if key is already held
+            if (pressedKeys.has(key) || !keyMap[key]) {
+                return;
+            }
+            
+            pressedKeys.add(key);
+            
+            const note = keyMap[key];
+            const noteIndex = MAJOR_SCALE_RATIOS.findIndex(n => n.key === key);
+            const plate = plates.find(p => p.userData.note.key === key);
+            
+            if (plate) {
+                const isShiftHeld = event.shiftKey;
+                const noteKey = `${key}${isShiftHeld ? '-shift' : ''}`;
+                
+                // Start sound - chord if Shift is held, single note otherwise
+                if (isShiftHeld) {
+                    // Get extensions based on current chord mode
+                    const currentMode = CHORD_MODES[chordModeIndex];
+                    const extensions = currentMode.getExtensions(noteIndex);
+                    startChord(noteIndex, noteKey, extensions);
+                } else {
+                    const frequency = getNoteFrequency(noteIndex);
+                    startNote(frequency, noteKey);
+                }
+                
+                // Visual feedback - brighten the plate (more intense for chords)
+                plate.material.emissiveIntensity = isShiftHeld ? 0.8 : 0.5;
+                plate.scale.set(isShiftHeld ? 1.3 : 1.2, isShiftHeld ? 1.3 : 1.2, isShiftHeld ? 1.3 : 1.2);
+            }
+        });
+        
+        // Release phase: Stop note/chord when key is released
+        document.addEventListener('keyup', (event) => {
+            const key = event.key.toLowerCase();
+            
+            if (!keyMap[key]) {
+                return;
+            }
+            
+            pressedKeys.delete(key);
+            
+            const isShiftHeld = event.shiftKey;
+            const noteKey = `${key}${isShiftHeld ? '-shift' : ''}`;
+            const plate = plates.find(p => p.userData.note.key === key);
+            
+            // Stop the sound (release phase)
+            stopNoteByKey(noteKey);
+            
+            // Visual feedback - fade out
+            if (plate) {
+                plate.material.emissiveIntensity = 0;
+                plate.scale.set(1, 1, 1);
+            }
+        });
+        
+        // Stop all notes if window loses focus (prevents stuck notes)
+        window.addEventListener('blur', () => {
+            stopAllNotes();
+            pressedKeys.clear();
+            
+            // Reset all plates visually
+            plates.forEach(plate => {
+                plate.material.emissiveIntensity = 0;
+                plate.scale.set(1, 1, 1);
+            });
+        });
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const time = Date.now() * 0.001;
+            
+            // Animate plates floating
+            plates.forEach((plate, index) => {
+                // Floating motion
+                plate.position.y = plate.userData.initialY + Math.sin(time * plate.userData.floatSpeed + index) * plate.userData.floatAmplitude;
+                
+                // Slow rotation
+                plate.rotation.z += plate.userData.rotationSpeed;
+                
+                // Smooth scale animation back to normal
+                if (plate.scale.x > 1) {
+                    plate.scale.lerp(new THREE.Vector3(1, 1, 1), 0.1);
+                }
+            });
+            
+            renderer.render(scene, camera);
+        }
+
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+            
+        // Start animation
+            animate();
+    </script>
+</body>
+</html>
