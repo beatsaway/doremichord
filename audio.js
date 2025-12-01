@@ -269,11 +269,11 @@ function createSubBass(frequency) {
     const gain = audioContext.createGain();
     gain.gain.setValueAtTime(0, now);
     
-    // Smooth attack and sustain for sub bass
+    // Smooth attack and sustain for sub bass - louder for lowest bass note
     const attackTime = 0.05;
-    gain.gain.linearRampToValueAtTime(0.6, now + attackTime); // Stronger sub bass
-    gain.gain.linearRampToValueAtTime(0.7, now + attackTime + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.65, now + 0.2);
+    gain.gain.linearRampToValueAtTime(1.0, now + attackTime); // Louder bass
+    gain.gain.linearRampToValueAtTime(1.2, now + attackTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(1.1, now + 0.2);
     
     // Connect: osc -> gain -> masterGain (no panning, no noise, pure sine)
     osc.connect(gain);
@@ -285,8 +285,20 @@ function createSubBass(frequency) {
     return { oscillator: osc, gainNode: gain };
 }
 
+// Helper function to add bass note to oscillators array if bass mode is on
+// This is shared by both startNote and startChord to avoid code duplication
+function addBassNoteIfEnabled(oscillators, noteIndex) {
+    if (window.bassMode && noteIndex !== null) {
+        const rootFreq = getScaleNoteFrequency(noteIndex, 0);
+        const bassFrequency = rootFreq / 2; // One octave lower
+        const bassComponents = createSubBass(bassFrequency);
+        oscillators.push(bassComponents);
+    }
+}
+
 // Function to start a note (attack phase) - stores in activeNotes and returns key
-function startNote(frequency, noteKey) {
+// noteIndex is optional - if provided and bass mode is on, adds bass note
+function startNote(frequency, noteKey, noteIndex = null) {
     resumeAudioContext();
     
     // Stop existing note if any
@@ -313,8 +325,13 @@ function startNote(frequency, noteKey) {
     noteComponents.gainNode.gain.linearRampToValueAtTime(frequencyGain, now + attackTime + 0.01);
     noteComponents.gainNode.gain.exponentialRampToValueAtTime(frequencyGain * 0.7, now + 0.15);
     
-    // Store in activeNotes (no bass for single notes)
-    activeNotes[noteKey] = [noteComponents];
+    const oscillators = [noteComponents];
+    
+    // Add bass note if bass mode is enabled (shared logic with startChord)
+    addBassNoteIfEnabled(oscillators, noteIndex);
+    
+    // Store in activeNotes
+    activeNotes[noteKey] = oscillators;
     
     return noteKey;
 }
@@ -371,13 +388,8 @@ function startChord(noteIndex, noteKey, extensions = []) {
         oscillators.push(noteComponents);
     });
     
-    // Add pure sine sub bass one octave lower if bass mode is on (use root frequency)
-    if (window.bassMode) {
-        const rootFreq = getScaleNoteFrequency(noteIndex, 0);
-        const bassFrequency = rootFreq / 2; // One octave lower
-        const bassComponents = createSubBass(bassFrequency);
-        oscillators.push(bassComponents);
-    }
+    // Add bass note if bass mode is enabled (shared logic with startNote)
+    addBassNoteIfEnabled(oscillators, noteIndex);
     
     // Store in activeNotes
     activeNotes[noteKey] = oscillators;
