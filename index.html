@@ -68,14 +68,165 @@
             opacity: 0.95;
             letter-spacing: 0.5px;
         }
+
+        #mode-buttons {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        #bass-toggle {
+            margin-bottom: 5px;
+        }
+
+        .bass-toggle-button {
+            background: rgba(0, 0, 0, 0.6);
+            color: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(78, 205, 196, 0.5);
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+
+        .bass-toggle-button:hover {
+            border-color: rgba(78, 205, 196, 0.8);
+            background: rgba(78, 205, 196, 0.2);
+        }
+
+        .bass-toggle-button.active {
+            background: #4ecdc4;
+            color: #000;
+            border-color: #4ecdc4;
+        }
+
+        .bass-toggle-button:active {
+            transform: scale(0.95);
+        }
+
+        .mode-buttons-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .mode-button {
+            background: rgba(0, 0, 0, 0.6);
+            color: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+            backdrop-filter: blur(10px);
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .mode-button:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Mode-specific colors matching rim lights */
+        .mode-button[data-mode="0"] {
+            border-color: rgba(136, 136, 136, 0.5);
+        }
+        .mode-button[data-mode="0"]:hover {
+            border-color: rgba(136, 136, 136, 0.8);
+            background: rgba(136, 136, 136, 0.2);
+        }
+        .mode-button[data-mode="0"].active {
+            background: #888888;
+            color: #fff;
+            border-color: #888888;
+        }
+
+        .mode-button[data-mode="1"] {
+            border-color: rgba(78, 205, 196, 0.5);
+        }
+        .mode-button[data-mode="1"]:hover {
+            border-color: rgba(78, 205, 196, 0.8);
+            background: rgba(78, 205, 196, 0.2);
+        }
+        .mode-button[data-mode="1"].active {
+            background: #4ecdc4;
+            color: #000;
+            border-color: #4ecdc4;
+        }
+
+        .mode-button[data-mode="2"] {
+            border-color: rgba(108, 92, 231, 0.5);
+        }
+        .mode-button[data-mode="2"]:hover {
+            border-color: rgba(108, 92, 231, 0.8);
+            background: rgba(108, 92, 231, 0.2);
+        }
+        .mode-button[data-mode="2"].active {
+            background: #6c5ce7;
+            color: #fff;
+            border-color: #6c5ce7;
+        }
+
+        .mode-button[data-mode="3"] {
+            border-color: rgba(255, 107, 107, 0.5);
+        }
+        .mode-button[data-mode="3"]:hover {
+            border-color: rgba(255, 107, 107, 0.8);
+            background: rgba(255, 107, 107, 0.2);
+        }
+        .mode-button[data-mode="3"].active {
+            background: #ff6b6b;
+            color: #000;
+            border-color: #ff6b6b;
+        }
+
+        .mode-button:active {
+            transform: scale(0.95);
+        }
+
+        @media (max-width: 768px) {
+            .mode-button {
+                padding: 10px 16px;
+                font-size: 12px;
+                min-width: 70px;
+            }
+            .bass-toggle-button {
+                padding: 8px 20px;
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
     <div id="scene-container"></div>
+    <div id="mode-buttons">
+        <div id="bass-toggle">
+            <div class="bass-toggle-button">Bass: <span id="bass-toggle-status">off</span></div>
+        </div>
+        <div class="mode-buttons-row">
+            <div class="mode-button" data-mode="0">Note</div>
+            <div class="mode-button" data-mode="1">Diatonic</div>
+            <div class="mode-button" data-mode="2">Jazz7</div>
+            <div class="mode-button" data-mode="3">Jazz79</div>
+        </div>
+    </div>
     <div id="instructions">
         <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>F</kbd> <kbd>G</kbd> <kbd>H</kbd> <kbd>J</kbd> <kbd>K</kbd> to play<br>
-        <kbd>Shift</kbd> + key for chords | <kbd>Enter</kbd> mode | <kbd>Space</kbd> bass<br>
-        <div id="extensions-status"><span id="mode-status">Diatonic</span> | Bass: <span id="bass-status">off</span></div>
+        <kbd>1</kbd> Note | <kbd>2</kbd> Diatonic | <kbd>3</kbd> Jazz7 | <kbd>4</kbd> Jazz79 | <kbd>Space</kbd> bass<br>
+        <div id="extensions-status"><span id="mode-status">Note</span> | Bass: <span id="bass-status">off</span></div>
     </div>
     
     <script src="three.min.js"></script>
@@ -110,6 +261,39 @@
         scene.add(directionalLight);
         
         // Audio functions and notes are now in audio.js
+        
+        // Mode visual properties - efficient material-based indicators
+        // Must be defined before plate creation
+        const MODE_VISUALS = {
+            0: { // Note mode - minimal, clean
+                baseEmissive: 0.05,
+                rimColor: 0x888888,
+                rimIntensity: 0.3,
+                metalness: 0.2,
+                roughness: 0.5
+            },
+            1: { // Diatonic - warm, classic
+                baseEmissive: 0.1,
+                rimColor: 0x4ecdc4,
+                rimIntensity: 0.5,
+                metalness: 0.3,
+                roughness: 0.4
+            },
+            2: { // Jazz7 - cool, sophisticated
+                baseEmissive: 0.15,
+                rimColor: 0x6c5ce7,
+                rimIntensity: 0.7,
+                metalness: 0.4,
+                roughness: 0.35
+            },
+            3: { // Jazz79 - rich, vibrant
+                baseEmissive: 0.2,
+                rimColor: 0xff6b6b,
+                rimIntensity: 0.9,
+                metalness: 0.5,
+                roughness: 0.3
+            }
+        };
         
         // Create floating circular plates
         const plates = [];
@@ -150,6 +334,20 @@
             plate.userData.originalColor = note.color;
             plate.userData.originalEmissive = note.color;
             
+            // Create rim light ring for mode indication (efficient outline effect)
+            const rimGeometry = new THREE.RingGeometry(0.82, 0.88, 32);
+            const rimMaterial = new THREE.MeshBasicMaterial({
+                color: MODE_VISUALS[0].rimColor,
+                transparent: true,
+                opacity: MODE_VISUALS[0].rimIntensity,
+                side: THREE.DoubleSide
+            });
+            const rim = new THREE.Mesh(rimGeometry, rimMaterial);
+            rim.rotation.x = Math.PI / 2;
+            rim.position.y = 0.06; // Slightly above the plate
+            plate.add(rim);
+            plate.userData.rim = rim;
+            
             // Create label for the plate
             const label = document.createElement('div');
             label.className = 'plate-label';
@@ -174,35 +372,98 @@
         // Track which keys are currently pressed (to prevent repeat triggers)
         const pressedKeys = new Set();
         
-        // Track chord mode (cycle through modes with Enter)
-        let chordModeIndex = 0;
+        // Track active touches for hold functionality
+        const activeTouches = new Map(); // touchId -> { plate, noteKey, noteIndex }
         
-        // Function to update chord mode display
+        // Raycaster for mouse/touch interaction with plates
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        
+        // Track mode: 0 = Note, 1 = Diatonic, 2 = Jazz7, 3 = Jazz79
+        let currentMode = 0; // 0 = Note mode, 1-3 = Chord modes
+        
+        // Mode names
+        const MODE_NAMES = ['Note', 'Diatonic', 'Jazz7', 'Jazz79'];
+        
+        // Function to update mode display
         function updateModeDisplay() {
             const modeStatus = document.getElementById('mode-status');
-            const currentMode = CHORD_MODES[chordModeIndex];
+            modeStatus.textContent = MODE_NAMES[currentMode];
             
-            modeStatus.textContent = currentMode.name;
-            modeStatus.style.color = chordModeIndex === 0 ? '#999' : '#4ecdc4';
+            // Get the current mode's rim color for status text
+            const modeVisual = MODE_VISUALS[currentMode];
+            const rimColorHex = '#' + modeVisual.rimColor.toString(16).padStart(6, '0');
+            modeStatus.style.color = rimColorHex;
             
-            // Update visual state of Enter key
+            // Update visual state of mode buttons
+            document.querySelectorAll('.mode-button').forEach(btn => {
+                const mode = parseInt(btn.getAttribute('data-mode'));
+                if (mode === currentMode) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // Update visual state of mode keys (1, 2, 3, 4) in instructions
             const allKeys = document.querySelectorAll('#instructions kbd');
             allKeys.forEach(kbd => {
-                if (kbd.textContent.trim().toLowerCase() === 'enter') {
-                    if (chordModeIndex === 0) {
-                        kbd.classList.remove('active');
-                    } else {
+                const keyText = kbd.textContent.trim();
+                if (keyText === '1' || keyText === '2' || keyText === '3' || keyText === '4') {
+                    const keyNum = parseInt(keyText);
+                    if (keyNum - 1 === currentMode) {
                         kbd.classList.add('active');
+                    } else {
+                        kbd.classList.remove('active');
                     }
                 }
             });
+            
+            // Update plate visuals based on mode (efficient material updates)
+            plates.forEach(plate => {
+                // Update base emissive intensity (subtle glow)
+                plate.material.emissiveIntensity = modeVisual.baseEmissive;
+                
+                // Update rim light color and intensity
+                if (plate.userData.rim) {
+                    plate.userData.rim.material.color.setHex(modeVisual.rimColor);
+                    plate.userData.rim.material.opacity = modeVisual.rimIntensity;
+                }
+                
+                // Update material properties for subtle texture changes
+                plate.material.metalness = modeVisual.metalness;
+                plate.material.roughness = modeVisual.roughness;
+            });
         }
+        
+        // Handle mode button clicks
+        document.querySelectorAll('.mode-button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const mode = parseInt(btn.getAttribute('data-mode'));
+                currentMode = mode;
+                updateModeDisplay();
+            });
+        });
         
         // Function to update bass mode display
         function updateBassDisplay() {
             const bassStatus = document.getElementById('bass-status');
             bassStatus.textContent = window.bassMode ? 'on' : 'off';
             bassStatus.style.color = window.bassMode ? '#4ecdc4' : '#999';
+            
+            // Update bass toggle button
+            const bassToggleStatus = document.getElementById('bass-toggle-status');
+            const bassToggleButton = document.querySelector('.bass-toggle-button');
+            if (bassToggleStatus) {
+                bassToggleStatus.textContent = window.bassMode ? 'on' : 'off';
+            }
+            if (bassToggleButton) {
+                if (window.bassMode) {
+                    bassToggleButton.classList.add('active');
+                } else {
+                    bassToggleButton.classList.remove('active');
+                }
+            }
             
             // Update visual state of Space key
             const allKeys = document.querySelectorAll('#instructions kbd');
@@ -217,16 +478,37 @@
             });
         }
         
-        // Handle chord mode cycle (Enter key)
+        // Handle bass toggle button click
+        document.querySelector('.bass-toggle-button')?.addEventListener('click', () => {
+            window.bassMode = !window.bassMode;
+            updateBassDisplay();
+        });
+        
+        // Handle mode selection (1, 2, 3, 4 keys) and bass toggle (Space)
         document.addEventListener('keydown', (event) => {
-            const key = event.key.toLowerCase();
-            
-            if (event.key === 'Enter' && !event.repeat) {
-                chordModeIndex = (chordModeIndex + 1) % CHORD_MODES.length;
+            // Handle mode selection with number keys
+            if (event.key === '1' && !event.repeat) {
+                currentMode = 0; // Note mode
+                updateModeDisplay();
+                return;
+            }
+            if (event.key === '2' && !event.repeat) {
+                currentMode = 1; // Diatonic
+                updateModeDisplay();
+                return;
+            }
+            if (event.key === '3' && !event.repeat) {
+                currentMode = 2; // Jazz7
+                updateModeDisplay();
+                return;
+            }
+            if (event.key === '4' && !event.repeat) {
+                currentMode = 3; // Jazz79
                 updateModeDisplay();
                 return;
             }
             
+            // Handle bass toggle (Space)
             if (event.key === ' ' && !event.repeat) {
                 event.preventDefault(); // Prevent page scroll
                 window.bassMode = !window.bassMode;
@@ -242,6 +524,58 @@
         // Resume audio on any user interaction
         document.addEventListener('click', resumeAudioContext, { once: true });
         document.addEventListener('keydown', resumeAudioContext, { once: true });
+        document.addEventListener('touchstart', resumeAudioContext, { once: true });
+        
+        // Helper function to play note/chord for a plate
+        function playPlate(plate, noteIndex, noteKey) {
+            const modeVisual = MODE_VISUALS[currentMode];
+            const baseEmissive = modeVisual.baseEmissive;
+            
+            if (currentMode === 0) {
+                // Note mode - play single note
+                const frequency = getNoteFrequency(noteIndex);
+                startNote(frequency, noteKey, noteIndex); // Pass noteIndex for bass mode
+                plate.material.emissiveIntensity = baseEmissive + 0.45; // Add to base
+                plate.scale.set(1.2, 1.2, 1.2);
+            } else {
+                // Chord modes (1 = Diatonic, 2 = Jazz7, 3 = Jazz79)
+                let extensions = [];
+                if (currentMode === 2) {
+                    // Jazz7
+                    extensions = getJazz7Extensions(noteIndex);
+                } else if (currentMode === 3) {
+                    // Jazz79
+                    extensions = getJazz79Extensions(noteIndex);
+                }
+                // currentMode === 1 (Diatonic) uses empty extensions array
+                startChord(noteIndex, noteKey, extensions);
+                plate.material.emissiveIntensity = baseEmissive + 0.6; // Add to base
+                plate.scale.set(1.3, 1.3, 1.3);
+            }
+        }
+        
+        // Helper function to stop note/chord for a plate
+        function stopPlate(plate, noteKey) {
+            stopNoteByKey(noteKey);
+            // Return to base mode emissive intensity
+            const modeVisual = MODE_VISUALS[currentMode];
+            plate.material.emissiveIntensity = modeVisual.baseEmissive;
+            plate.scale.set(1, 1, 1);
+        }
+        
+        // Helper function to get plate from mouse/touch coordinates
+        function getPlateFromCoordinates(x, y) {
+            mouse.x = (x / window.innerWidth) * 2 - 1;
+            mouse.y = -(y / window.innerHeight) * 2 + 1;
+            
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(plates);
+            
+            if (intersects.length > 0) {
+                return intersects[0].object;
+            }
+            return null;
+        }
         
         // Attack phase: Start note/chord when key is pressed
         document.addEventListener('keydown', (event) => {
@@ -259,23 +593,8 @@
             const plate = plates.find(p => p.userData.note.key === key);
             
             if (plate) {
-                const isShiftHeld = event.shiftKey;
-                const noteKey = `${key}${isShiftHeld ? '-shift' : ''}`;
-                
-                // Start sound - chord if Shift is held, single note otherwise
-                if (isShiftHeld) {
-                    // Get extensions based on current chord mode
-                    const currentMode = CHORD_MODES[chordModeIndex];
-                    const extensions = currentMode.getExtensions(noteIndex);
-                    startChord(noteIndex, noteKey, extensions);
-                } else {
-                    const frequency = getNoteFrequency(noteIndex);
-                    startNote(frequency, noteKey);
-                }
-                
-                // Visual feedback - brighten the plate (more intense for chords)
-                plate.material.emissiveIntensity = isShiftHeld ? 0.8 : 0.5;
-                plate.scale.set(isShiftHeld ? 1.3 : 1.2, isShiftHeld ? 1.3 : 1.2, isShiftHeld ? 1.3 : 1.2);
+                const noteKey = key;
+                playPlate(plate, noteIndex, noteKey);
             }
         });
         
@@ -289,17 +608,12 @@
             
             pressedKeys.delete(key);
             
-            const isShiftHeld = event.shiftKey;
-            const noteKey = `${key}${isShiftHeld ? '-shift' : ''}`;
+            const noteKey = key;
             const plate = plates.find(p => p.userData.note.key === key);
             
             // Stop the sound (release phase)
-            stopNoteByKey(noteKey);
-            
-            // Visual feedback - fade out
             if (plate) {
-                plate.material.emissiveIntensity = 0;
-                plate.scale.set(1, 1, 1);
+                stopPlate(plate, noteKey);
             }
         });
         
@@ -308,9 +622,10 @@
             stopAllNotes();
             pressedKeys.clear();
             
-            // Reset all plates visually
+            // Reset all plates visually to base mode state
+            const modeVisual = MODE_VISUALS[currentMode];
             plates.forEach(plate => {
-                plate.material.emissiveIntensity = 0;
+                plate.material.emissiveIntensity = modeVisual.baseEmissive;
                 plate.scale.set(1, 1, 1);
             });
         });
@@ -372,6 +687,127 @@
                 updateLabelPositions();
             });
             
+        // Mouse interaction with plates
+        let isMouseDown = false;
+        let activeMousePlate = null;
+        let activeMouseNoteKey = null;
+        let activeMouseNoteIndex = null;
+        
+        renderer.domElement.addEventListener('mousedown', (event) => {
+            isMouseDown = true;
+            const plate = getPlateFromCoordinates(event.clientX, event.clientY);
+            if (plate) {
+                activeMousePlate = plate;
+                const noteIndex = plates.indexOf(plate);
+                const noteKey = `mouse-${noteIndex}`;
+                activeMouseNoteKey = noteKey;
+                activeMouseNoteIndex = noteIndex;
+                playPlate(plate, noteIndex, noteKey);
+            }
+        });
+        
+        renderer.domElement.addEventListener('mousemove', (event) => {
+            if (isMouseDown && activeMousePlate) {
+                const plate = getPlateFromCoordinates(event.clientX, event.clientY);
+                // If mouse moved off the plate, stop the sound
+                if (!plate || plate !== activeMousePlate) {
+                    stopPlate(activeMousePlate, activeMouseNoteKey);
+                    activeMousePlate = null;
+                    activeMouseNoteKey = null;
+                    activeMouseNoteIndex = null;
+                }
+            }
+        });
+        
+        renderer.domElement.addEventListener('mouseup', (event) => {
+            if (isMouseDown && activeMousePlate) {
+                stopPlate(activeMousePlate, activeMouseNoteKey);
+                activeMousePlate = null;
+                activeMouseNoteKey = null;
+                activeMouseNoteIndex = null;
+            }
+            isMouseDown = false;
+        });
+        
+        renderer.domElement.addEventListener('mouseleave', (event) => {
+            if (isMouseDown && activeMousePlate) {
+                stopPlate(activeMousePlate, activeMouseNoteKey);
+                activeMousePlate = null;
+                activeMouseNoteKey = null;
+                activeMouseNoteIndex = null;
+            }
+            isMouseDown = false;
+        });
+        
+        // Touch interaction with plates
+        renderer.domElement.addEventListener('touchstart', (event) => {
+            event.preventDefault();
+            for (let i = 0; i < event.touches.length; i++) {
+                const touch = event.touches[i];
+                const plate = getPlateFromCoordinates(touch.clientX, touch.clientY);
+                if (plate && !activeTouches.has(touch.identifier)) {
+                    const noteIndex = plates.indexOf(plate);
+                    const noteKey = `touch-${touch.identifier}-${noteIndex}`;
+                    activeTouches.set(touch.identifier, { plate, noteKey, noteIndex });
+                    playPlate(plate, noteIndex, noteKey);
+                }
+            }
+        });
+        
+        renderer.domElement.addEventListener('touchmove', (event) => {
+            event.preventDefault();
+            for (let i = 0; i < event.touches.length; i++) {
+                const touch = event.touches[i];
+                const touchData = activeTouches.get(touch.identifier);
+                if (touchData) {
+                    const plate = getPlateFromCoordinates(touch.clientX, touch.clientY);
+                    // If touch moved off the plate, stop the sound
+                    if (!plate || plate !== touchData.plate) {
+                        stopPlate(touchData.plate, touchData.noteKey);
+                        activeTouches.delete(touch.identifier);
+                    }
+                } else {
+                    // New touch on a plate
+                    const plate = getPlateFromCoordinates(touch.clientX, touch.clientY);
+                    if (plate) {
+                        const noteIndex = plates.indexOf(plate);
+                        const noteKey = `touch-${touch.identifier}-${noteIndex}`;
+                        activeTouches.set(touch.identifier, { plate, noteKey, noteIndex });
+                        playPlate(plate, noteIndex, noteKey);
+                    }
+                }
+            }
+        });
+        
+        renderer.domElement.addEventListener('touchend', (event) => {
+            event.preventDefault();
+            for (let i = 0; i < event.changedTouches.length; i++) {
+                const touch = event.changedTouches[i];
+                const touchData = activeTouches.get(touch.identifier);
+                if (touchData) {
+                    stopPlate(touchData.plate, touchData.noteKey);
+                    activeTouches.delete(touch.identifier);
+                }
+            }
+        });
+        
+        renderer.domElement.addEventListener('touchcancel', (event) => {
+            event.preventDefault();
+            for (let i = 0; i < event.changedTouches.length; i++) {
+                const touch = event.changedTouches[i];
+                const touchData = activeTouches.get(touch.identifier);
+                if (touchData) {
+                    stopPlate(touchData.plate, touchData.noteKey);
+                    activeTouches.delete(touch.identifier);
+                }
+            }
+        });
+        
+        // Prevent context menu on long press (mobile)
+        renderer.domElement.addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+        });
+        
         // Start animation
             animate();
     </script>
