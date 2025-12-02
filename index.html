@@ -2,210 +2,419 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Musical Plates</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Doremi Chord</title>
     <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+
         body {
             margin: 0; 
             padding: 0; 
             overflow: hidden;
-            background: #000;
-            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            touch-action: manipulation;
+            height: 100vh;
+            height: 100dvh;
         }
 
         #scene-container { 
-            width: 100vw;
-            height: 100vh;
+            display: none;
         }
 
-        #instructions {
-            position: fixed;
-            bottom: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.9);
-            text-align: center;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 13px;
-            z-index: 1000;
-            backdrop-filter: blur(10px);
-            line-height: 1.6;
-        }
-
-        #instructions kbd {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: monospace;
-            margin: 0 1px;
+        .key-shortcut {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
             font-size: 11px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        #instructions kbd.active {
-            background: #4ecdc4;
-            color: #000;
-        }
-
-        #extensions-status {
-            margin-top: 6px;
-            font-size: 11px;
-            opacity: 0.7;
-        }
-
-        .plate-label {
-            position: fixed;
-            color: white;
-            font-size: 20px;
-            font-weight: 600;
-            text-shadow: 0 0 8px rgba(0, 0, 0, 0.9), 0 2px 6px rgba(0, 0, 0, 0.7);
-            pointer-events: none;
-            z-index: 100;
-            font-family: 'Arial', sans-serif;
-            text-align: center;
-            transform: translate(-50%, -50%);
-            opacity: 0.95;
+            color: #999;
+            font-weight: 400;
+            margin-left: 6px;
             letter-spacing: 0.5px;
+        }
+
+        .key-shortcut::before {
+            content: '·';
+            margin-right: 6px;
+            color: #ccc;
         }
 
         #mode-buttons {
             position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            top: 0;
+            left: 0;
+            right: 0;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            gap: 10px;
+            align-items: stretch;
+            gap: 0;
             z-index: 1000;
+            width: 100%;
+            box-sizing: border-box;
         }
 
         #bass-toggle {
-            margin-bottom: 5px;
+            width: 100%;
         }
 
         .bass-toggle-button {
-            background: rgba(0, 0, 0, 0.6);
-            color: rgba(255, 255, 255, 0.9);
-            border: 2px solid rgba(78, 205, 196, 0.5);
-            padding: 10px 24px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
+            background: #fff;
+            color: #666;
+            border: none;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 16px;
+            border-radius: 0;
+            font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
             user-select: none;
-            transition: all 0.2s;
-            backdrop-filter: blur(10px);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             text-align: center;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bass-toggle-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 0;
         }
 
         .bass-toggle-button:hover {
-            border-color: rgba(78, 205, 196, 0.8);
-            background: rgba(78, 205, 196, 0.2);
-        }
-
-        .bass-toggle-button.active {
-            background: #4ecdc4;
-            color: #000;
-            border-color: #4ecdc4;
+            border-color: #000;
+            transform: translateY(-1px);
         }
 
         .bass-toggle-button:active {
-            transform: scale(0.95);
+            transform: scale(0.97) translateY(0);
+        }
+
+        .bass-toggle-button.active {
+            background: #e0e0e0;
+            color: #666;
+            border-color: #000;
+        }
+
+        .bass-toggle-button.active::before {
+            opacity: 1;
+        }
+
+        .bass-toggle-button > * {
+            position: relative;
+            z-index: 1;
+            color: inherit;
         }
 
         .mode-buttons-row {
-            display: flex;
-            gap: 10px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0;
+            width: 100%;
         }
 
         .mode-button {
-            background: rgba(0, 0, 0, 0.6);
-            color: rgba(255, 255, 255, 0.9);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
+            background: #fff;
+            color: #666;
+            border: none;
+            border-right: 1px solid #e0e0e0;
+            padding: 16px 8px;
+            border-radius: 0;
+            font-size: 12px;
+            font-weight: 500;
             cursor: pointer;
             user-select: none;
-            transition: all 0.2s;
-            backdrop-filter: blur(10px);
-            min-width: 80px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             text-align: center;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .mode-button:last-child {
+            border-right: none;
+        }
+
+        .mode-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 0;
         }
 
         .mode-button:hover {
-            border-color: rgba(255, 255, 255, 0.5);
+            border-color: #000;
+            transform: translateY(-1px);
         }
 
-        /* Mode-specific colors matching rim lights */
+        .mode-button[data-mode="0"]:active {
+            transform: scale(0.96) translateY(0);
+        }
+
+        .mode-button[data-mode="1"]:active {
+            transform: scale(0.96) translateY(0);
+        }
+
+        .mode-button[data-mode="2"]:active {
+            transform: scale(0.96) translateY(0);
+        }
+
+        .mode-button[data-mode="3"]:active {
+            transform: scale(0.96) translateY(0);
+        }
+
         .mode-button[data-mode="0"] {
-            border-color: rgba(136, 136, 136, 0.5);
+            background: #fff;
+            color: #1976d2;
         }
-        .mode-button[data-mode="0"]:hover {
-            border-color: rgba(136, 136, 136, 0.8);
-            background: rgba(136, 136, 136, 0.2);
-        }
+
         .mode-button[data-mode="0"].active {
-            background: #888888;
-            color: #fff;
-            border-color: #888888;
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .mode-button[data-mode="0"].active::before {
+            opacity: 1;
+        }
+
+        .mode-button[data-mode="0"].active:hover {
+            color: #1976d2;
+        }
+
+        .mode-button[data-mode="0"].active:active {
+            color: #1976d2;
         }
 
         .mode-button[data-mode="1"] {
-            border-color: rgba(78, 205, 196, 0.5);
+            background: #fff;
+            color: #2a9d8f;
         }
-        .mode-button[data-mode="1"]:hover {
-            border-color: rgba(78, 205, 196, 0.8);
-            background: rgba(78, 205, 196, 0.2);
-        }
+
         .mode-button[data-mode="1"].active {
-            background: #4ecdc4;
-            color: #000;
-            border-color: #4ecdc4;
+            background: #e0f7f5;
+            color: #2a9d8f;
+        }
+
+        .mode-button[data-mode="1"].active::before {
+            opacity: 1;
+        }
+
+        .mode-button[data-mode="1"].active:hover {
+            color: #2a9d8f;
+        }
+
+        .mode-button[data-mode="1"].active:active {
+            color: #2a9d8f;
         }
 
         .mode-button[data-mode="2"] {
-            border-color: rgba(108, 92, 231, 0.5);
+            background: #fff;
+            color: #5f3dc4;
         }
-        .mode-button[data-mode="2"]:hover {
-            border-color: rgba(108, 92, 231, 0.8);
-            background: rgba(108, 92, 231, 0.2);
-        }
+
         .mode-button[data-mode="2"].active {
-            background: #6c5ce7;
-            color: #fff;
-            border-color: #6c5ce7;
+            background: #ede9ff;
+            color: #5f3dc4;
+        }
+
+        .mode-button[data-mode="2"].active::before {
+            opacity: 1;
+        }
+
+        .mode-button[data-mode="2"].active:hover {
+            color: #5f3dc4;
+        }
+
+        .mode-button[data-mode="2"].active:active {
+            color: #5f3dc4;
         }
 
         .mode-button[data-mode="3"] {
-            border-color: rgba(255, 107, 107, 0.5);
-        }
-        .mode-button[data-mode="3"]:hover {
-            border-color: rgba(255, 107, 107, 0.8);
-            background: rgba(255, 107, 107, 0.2);
-        }
-        .mode-button[data-mode="3"].active {
-            background: #ff6b6b;
-            color: #000;
-            border-color: #ff6b6b;
+            background: #fff;
+            color: #d63031;
         }
 
-        .mode-button:active {
-            transform: scale(0.95);
+        .mode-button[data-mode="3"].active {
+            background: #ffe5e5;
+            color: #d63031;
+        }
+
+        .mode-button[data-mode="3"].active::before {
+            opacity: 1;
+        }
+
+        .mode-button[data-mode="3"].active:hover {
+            color: #d63031;
+        }
+
+        .mode-button[data-mode="3"].active:active {
+            color: #d63031;
+        }
+
+        .mode-button > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        #mobile-buttons {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            grid-auto-flow: row;
+            gap: 0;
+            padding: 0;
+            background: #fff;
+            z-index: 2000;
+            border-top: 1px solid #e0e0e0;
+            height: calc(50vh);
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .mobile-note-button {
+            border: none;
+            border-right: 1px solid #e0e0e0;
+            border-bottom: 1px solid #e0e0e0;
+            border-radius: 0;
+            background: #fafafa;
+            color: #333;
+            font-size: 18px;
+            font-weight: 500;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+        }
+
+        .mobile-note-button:nth-child(4n) {
+            border-right: none;
+        }
+
+        .mobile-note-button:nth-child(n+5) {
+            border-bottom: none;
+        }
+
+        .mobile-note-button.bass-active {
+            box-shadow: inset 0 0 0 1px #333;
+        }
+
+        .mobile-note-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: currentColor;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 0;
+        }
+
+        .mobile-note-button:hover {
+            background: #f0f0f0;
+        }
+
+        .mobile-note-button:active {
+            transform: scale(0.98);
+        }
+
+        .mobile-note-button.active {
+            color: #fff !important;
+            transform: scale(1);
+        }
+
+        .mobile-note-button.active::before {
+            opacity: 0.15;
+        }
+
+        .mobile-note-button .note-name {
+            font-size: 42px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            line-height: 1;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 1;
+            text-transform: uppercase;
+            transition: transform 0.15s ease;
+            color: inherit;
+        }
+
+        .mobile-note-button.active .note-name {
+            color: #fff !important;
+        }
+
+        .mobile-note-button:active .note-name {
+            transform: scale(0.9);
+        }
+
+        .mobile-note-button.active .note-name {
+            transform: scale(1.05);
+        }
+
+        .mobile-note-button .note-key {
+            font-size: 11px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-weight: 500;
+            padding: 4px 10px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+            position: relative;
+            z-index: 1;
+            color: #666;
+            transition: all 0.15s ease;
+        }
+
+        .mobile-note-button.active .note-key {
+            background: rgba(255, 255, 255, 0.25);
+            color: rgba(255, 255, 255, 0.95) !important;
         }
 
         @media (max-width: 768px) {
-            .mode-button {
-                padding: 10px 16px;
-                font-size: 12px;
-                min-width: 70px;
+            .mobile-note-button .note-name {
+                font-size: 36px;
             }
-            .bass-toggle-button {
-                padding: 8px 20px;
-                font-size: 12px;
+        }
+
+        @media (max-width: 480px) {
+            .mobile-note-button .note-name {
+                font-size: 32px;
+            }
+            
+            .mobile-note-button .note-key {
+                font-size: 10px;
+                padding: 3px 8px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .mobile-note-button .note-name {
+                font-size: 28px;
             }
         }
     </style>
@@ -214,152 +423,47 @@
     <div id="scene-container"></div>
     <div id="mode-buttons">
         <div id="bass-toggle">
-            <div class="bass-toggle-button">Bass: <span id="bass-toggle-status">off</span></div>
+            <div class="bass-toggle-button">Bass <span class="key-shortcut">Spacebar</span></div>
         </div>
         <div class="mode-buttons-row">
-            <div class="mode-button" data-mode="0">Note</div>
-            <div class="mode-button" data-mode="1">Diatonic</div>
-            <div class="mode-button" data-mode="2">Jazz7</div>
-            <div class="mode-button" data-mode="3">Jazz79</div>
+            <div class="mode-button" data-mode="0">Note <span class="key-shortcut">1</span></div>
+            <div class="mode-button" data-mode="1">Diatonic <span class="key-shortcut">2</span></div>
+            <div class="mode-button" data-mode="2">Jazz7 <span class="key-shortcut">3</span></div>
+            <div class="mode-button" data-mode="3">Jazz79 <span class="key-shortcut">4</span></div>
         </div>
     </div>
-    <div id="instructions">
-        <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>F</kbd> <kbd>G</kbd> <kbd>H</kbd> <kbd>J</kbd> <kbd>K</kbd> to play<br>
-        <kbd>1</kbd> Note | <kbd>2</kbd> Diatonic | <kbd>3</kbd> Jazz7 | <kbd>4</kbd> Jazz79 | <kbd>Space</kbd> bass<br>
-        <div id="extensions-status"><span id="mode-status">Note</span> | Bass: <span id="bass-status">off</span></div>
-    </div>
     
-    <script src="three.min.js"></script>
+    <!-- Modern mobile note buttons -->
+    <div id="mobile-buttons"></div>
+    
     <script src="watersynth.js"></script>
     <script src="audio.js"></script>
     <script>
-        // Scene setup
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x1a1a2e);
-        
-        const camera = new THREE.PerspectiveCamera(
-            75,
-            window.innerWidth / window.innerHeight,
-            0.1,
-            1000
-        );
-        
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.getElementById('scene-container').appendChild(renderer.domElement);
-        
-        // Position camera
-        camera.position.set(0, 0, 5);
-        camera.lookAt(0, 0, 0);
-        
-        // Lighting
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-        scene.add(ambientLight);
-        
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        directionalLight.position.set(5, 5, 5);
-        scene.add(directionalLight);
-        
         // Audio functions and notes are now in audio.js
         
-        // Mode visual properties - efficient material-based indicators
-        // Must be defined before plate creation
+        // Mode visual properties for button colors
         const MODE_VISUALS = {
-            0: { // Note mode - minimal, clean
-                baseEmissive: 0.05,
-                rimColor: 0x888888,
-                rimIntensity: 0.3,
-                metalness: 0.2,
-                roughness: 0.5
-            },
-            1: { // Diatonic - warm, classic
-                baseEmissive: 0.1,
-                rimColor: 0x4ecdc4,
-                rimIntensity: 0.5,
-                metalness: 0.3,
-                roughness: 0.4
-            },
-            2: { // Jazz7 - cool, sophisticated
-                baseEmissive: 0.15,
-                rimColor: 0x6c5ce7,
-                rimIntensity: 0.7,
-                metalness: 0.4,
-                roughness: 0.35
-            },
-            3: { // Jazz79 - rich, vibrant
-                baseEmissive: 0.2,
-                rimColor: 0xff6b6b,
-                rimIntensity: 0.9,
-                metalness: 0.5,
-                roughness: 0.3
-            }
+            0: { rimColor: 0x3498db, tintColor: '#e3f2fd' },  // Note mode - blue
+            1: { rimColor: 0x4ecdc4, tintColor: '#e0f7f5' },  // Diatonic - teal tint
+            2: { rimColor: 0x6c5ce7, tintColor: '#ede9ff' },  // Jazz7 - purple tint
+            3: { rimColor: 0xff6b6b, tintColor: '#ffe5e5' }   // Jazz79 - red tint
         };
         
-        // Create floating circular plates
-        const plates = [];
-        const plateCount = 8; // Lower La, Lower Ti, Do, Re, Mi, Fa, So, La
-        
-        for (let i = 0; i < plateCount; i++) {
-            const note = MAJOR_SCALE_RATIOS[i];
+        // Function to update note button colors based on mode
+        function updateNoteButtonColors() {
+            const modeTint = MODE_VISUALS[currentMode].tintColor;
             
-            // Create a circular plate using CylinderGeometry with very small height
-            const geometry = new THREE.CylinderGeometry(0.8, 0.8, 0.1, 32);
-            const material = new THREE.MeshStandardMaterial({
-                color: note.color,
-                metalness: 0.3,
-                roughness: 0.4,
-                emissive: note.color,
-                emissiveIntensity: 0
+            document.querySelectorAll('.mobile-note-button').forEach(button => {
+                // Only update if button is not currently active
+                if (!button.classList.contains('active')) {
+                    // Use mode tint color directly (no individual note colors)
+                    button.style.background = modeTint;
+                }
             });
-            
-            const plate = new THREE.Mesh(geometry, material);
-            
-            // Position plates in order of the musical scale (Lower La, Lower Ti, Do, Re, Mi, Fa, So, La)
-            // Arrange them in a row from left to right, slightly curved
-            const spacing = 1.5;
-            const startX = -(plateCount - 1) * spacing / 2;
-            plate.position.x = startX + i * spacing;
-            plate.position.y = Math.sin(i * 0.3) * 0.5; // Slight vertical curve
-            plate.position.z = -2;
-            
-            // Rotate to face camera (lay flat)
-            plate.rotation.x = Math.PI / 2;
-            
-            // Store animation properties and note data
-            plate.userData.floatSpeed = 0.5 + Math.random() * 0.5;
-            plate.userData.floatAmplitude = 0.3 + Math.random() * 0.2;
-            plate.userData.rotationSpeed = 0.01 + Math.random() * 0.02;
-            plate.userData.initialY = plate.position.y;
-            plate.userData.note = note;
-            plate.userData.originalColor = note.color;
-            plate.userData.originalEmissive = note.color;
-            
-            // Create rim light ring for mode indication (efficient outline effect)
-            const rimGeometry = new THREE.RingGeometry(0.82, 0.88, 32);
-            const rimMaterial = new THREE.MeshBasicMaterial({
-                color: MODE_VISUALS[0].rimColor,
-                transparent: true,
-                opacity: MODE_VISUALS[0].rimIntensity,
-                side: THREE.DoubleSide
-            });
-            const rim = new THREE.Mesh(rimGeometry, rimMaterial);
-            rim.rotation.x = Math.PI / 2;
-            rim.position.y = 0.06; // Slightly above the plate
-            plate.add(rim);
-            plate.userData.rim = rim;
-            
-            // Create label for the plate
-            const label = document.createElement('div');
-            label.className = 'plate-label';
-            // Remove "Lower " prefix from labels for cleaner display
-            label.textContent = note.name.replace('Lower ', '');
-            label.id = `label-${i}`;
-            document.body.appendChild(label);
-            plate.userData.label = label;
-            
-            scene.add(plate);
-            plates.push(plate);
         }
+        
+        // Store note indices for audio playback (no plates needed)
+        const noteIndices = MAJOR_SCALE_RATIOS.map((_, i) => i);
         
         // Keyboard controls
         const keyMap = {};
@@ -372,13 +476,6 @@
         // Track which keys are currently pressed (to prevent repeat triggers)
         const pressedKeys = new Set();
         
-        // Track active touches for hold functionality
-        const activeTouches = new Map(); // touchId -> { plate, noteKey, noteIndex }
-        
-        // Raycaster for mouse/touch interaction with plates
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-        
         // Track mode: 0 = Note, 1 = Diatonic, 2 = Jazz7, 3 = Jazz79
         let currentMode = 0; // 0 = Note mode, 1-3 = Chord modes
         
@@ -387,14 +484,6 @@
         
         // Function to update mode display
         function updateModeDisplay() {
-            const modeStatus = document.getElementById('mode-status');
-            modeStatus.textContent = MODE_NAMES[currentMode];
-            
-            // Get the current mode's rim color for status text
-            const modeVisual = MODE_VISUALS[currentMode];
-            const rimColorHex = '#' + modeVisual.rimColor.toString(16).padStart(6, '0');
-            modeStatus.style.color = rimColorHex;
-            
             // Update visual state of mode buttons
             document.querySelectorAll('.mode-button').forEach(btn => {
                 const mode = parseInt(btn.getAttribute('data-mode'));
@@ -405,35 +494,8 @@
                 }
             });
             
-            // Update visual state of mode keys (1, 2, 3, 4) in instructions
-            const allKeys = document.querySelectorAll('#instructions kbd');
-            allKeys.forEach(kbd => {
-                const keyText = kbd.textContent.trim();
-                if (keyText === '1' || keyText === '2' || keyText === '3' || keyText === '4') {
-                    const keyNum = parseInt(keyText);
-                    if (keyNum - 1 === currentMode) {
-                        kbd.classList.add('active');
-                    } else {
-                        kbd.classList.remove('active');
-                    }
-                }
-            });
-            
-            // Update plate visuals based on mode (efficient material updates)
-            plates.forEach(plate => {
-                // Update base emissive intensity (subtle glow)
-                plate.material.emissiveIntensity = modeVisual.baseEmissive;
-                
-                // Update rim light color and intensity
-                if (plate.userData.rim) {
-                    plate.userData.rim.material.color.setHex(modeVisual.rimColor);
-                    plate.userData.rim.material.opacity = modeVisual.rimIntensity;
-                }
-                
-                // Update material properties for subtle texture changes
-                plate.material.metalness = modeVisual.metalness;
-                plate.material.roughness = modeVisual.roughness;
-            });
+            // Update note button colors based on mode
+            updateNoteButtonColors();
         }
         
         // Handle mode button clicks
@@ -447,16 +509,8 @@
         
         // Function to update bass mode display
         function updateBassDisplay() {
-            const bassStatus = document.getElementById('bass-status');
-            bassStatus.textContent = window.bassMode ? 'on' : 'off';
-            bassStatus.style.color = window.bassMode ? '#4ecdc4' : '#999';
-            
             // Update bass toggle button
-            const bassToggleStatus = document.getElementById('bass-toggle-status');
             const bassToggleButton = document.querySelector('.bass-toggle-button');
-            if (bassToggleStatus) {
-                bassToggleStatus.textContent = window.bassMode ? 'on' : 'off';
-            }
             if (bassToggleButton) {
                 if (window.bassMode) {
                     bassToggleButton.classList.add('active');
@@ -465,15 +519,12 @@
                 }
             }
             
-            // Update visual state of Space key
-            const allKeys = document.querySelectorAll('#instructions kbd');
-            allKeys.forEach(kbd => {
-                if (kbd.textContent.trim().toLowerCase() === 'space') {
-                    if (window.bassMode) {
-                        kbd.classList.add('active');
-                    } else {
-                        kbd.classList.remove('active');
-                    }
+            // Update border on note buttons when bass is active
+            document.querySelectorAll('.mobile-note-button').forEach(button => {
+                if (window.bassMode) {
+                    button.classList.add('bass-active');
+                } else {
+                    button.classList.remove('bass-active');
                 }
             });
         }
@@ -521,22 +572,103 @@
         updateModeDisplay();
         updateBassDisplay();
         
+        // Initialize note button colors
+        updateNoteButtonColors();
+        
+        // Create mobile-friendly buttons
+        // Layout: Row 1 = La, Ti, Do, Re | Row 2 = Mi, Fa, So, La
+        const mobileButtonsContainer = document.getElementById('mobile-buttons');
+        const mobileButtons = [];
+        const buttonByKey = {}; // Map keyboard keys to button elements
+        
+        MAJOR_SCALE_RATIOS.forEach((note, index) => {
+            const button = document.createElement('div');
+            button.className = 'mobile-note-button';
+            button.setAttribute('data-note-index', index);
+            button.setAttribute('data-note-key', note.key);
+            
+            const noteName = document.createElement('div');
+            noteName.className = 'note-name';
+            noteName.textContent = note.name.replace('Lower ', '');
+            
+            const noteKey = document.createElement('div');
+            noteKey.className = 'note-key';
+            noteKey.textContent = note.key.toUpperCase();
+            
+            button.appendChild(noteName);
+            button.appendChild(noteKey);
+            
+            // Touch/click handlers for mobile buttons
+            let isButtonPressed = false;
+            
+            const handleStart = (e) => {
+                e.preventDefault();
+                if (isButtonPressed) return;
+                isButtonPressed = true;
+                
+                const noteIndex = parseInt(button.getAttribute('data-note-index'));
+                const noteKey = `mobile-${index}-${Date.now()}`;
+                
+                playNoteForButton(noteIndex, noteKey);
+                button.classList.add('active');
+                
+                // Apply mode color as background when active (darker version)
+                const modeColor = MODE_VISUALS[currentMode].rimColor;
+                const activeColor = '#' + modeColor.toString(16).padStart(6, '0');
+                button.style.background = activeColor;
+                button.style.borderRightColor = activeColor;
+                button.style.borderBottomColor = activeColor;
+                
+                button.userData = { noteKey, noteIndex };
+            };
+            
+            const handleEnd = (e) => {
+                e.preventDefault();
+                if (!isButtonPressed) return;
+                isButtonPressed = false;
+                
+                if (button.userData) {
+                    stopNoteByKey(button.userData.noteKey);
+                    button.classList.remove('active');
+                    
+                    // Reset to mode-tinted color
+                    const modeTint = MODE_VISUALS[currentMode].tintColor;
+                    button.style.background = modeTint;
+                    button.style.borderRightColor = '#e0e0e0';
+                    button.style.borderBottomColor = '#e0e0e0';
+                    
+                    button.userData = null;
+                }
+            };
+            
+            // Support both touch and mouse events
+            button.addEventListener('touchstart', handleStart, { passive: false });
+            button.addEventListener('touchend', handleEnd, { passive: false });
+            button.addEventListener('touchcancel', handleEnd, { passive: false });
+            button.addEventListener('mousedown', handleStart);
+            button.addEventListener('mouseup', handleEnd);
+            button.addEventListener('mouseleave', handleEnd);
+            
+            mobileButtonsContainer.appendChild(button);
+            mobileButtons.push(button);
+            
+            // Store button reference by key for keyboard visual feedback
+            if (note.key) {
+                buttonByKey[note.key] = button;
+            }
+        });
+        
         // Resume audio on any user interaction
         document.addEventListener('click', resumeAudioContext, { once: true });
         document.addEventListener('keydown', resumeAudioContext, { once: true });
         document.addEventListener('touchstart', resumeAudioContext, { once: true });
         
-        // Helper function to play note/chord for a plate
-        function playPlate(plate, noteIndex, noteKey) {
-            const modeVisual = MODE_VISUALS[currentMode];
-            const baseEmissive = modeVisual.baseEmissive;
-            
+        // Helper function to play note/chord for a button
+        function playNoteForButton(noteIndex, noteKey) {
             if (currentMode === 0) {
                 // Note mode - play single note
                 const frequency = getNoteFrequency(noteIndex);
-                startNote(frequency, noteKey, noteIndex); // Pass noteIndex for bass mode
-                plate.material.emissiveIntensity = baseEmissive + 0.45; // Add to base
-                plate.scale.set(1.2, 1.2, 1.2);
+                startNote(frequency, noteKey, noteIndex);
             } else {
                 // Chord modes (1 = Diatonic, 2 = Jazz7, 3 = Jazz79)
                 let extensions = [];
@@ -549,32 +681,7 @@
                 }
                 // currentMode === 1 (Diatonic) uses empty extensions array
                 startChord(noteIndex, noteKey, extensions);
-                plate.material.emissiveIntensity = baseEmissive + 0.6; // Add to base
-                plate.scale.set(1.3, 1.3, 1.3);
             }
-        }
-        
-        // Helper function to stop note/chord for a plate
-        function stopPlate(plate, noteKey) {
-            stopNoteByKey(noteKey);
-            // Return to base mode emissive intensity
-            const modeVisual = MODE_VISUALS[currentMode];
-            plate.material.emissiveIntensity = modeVisual.baseEmissive;
-            plate.scale.set(1, 1, 1);
-        }
-        
-        // Helper function to get plate from mouse/touch coordinates
-        function getPlateFromCoordinates(x, y) {
-            mouse.x = (x / window.innerWidth) * 2 - 1;
-            mouse.y = -(y / window.innerHeight) * 2 + 1;
-            
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(plates);
-            
-            if (intersects.length > 0) {
-                return intersects[0].object;
-            }
-            return null;
         }
         
         // Attack phase: Start note/chord when key is pressed
@@ -588,14 +695,22 @@
             
             pressedKeys.add(key);
             
-            const note = keyMap[key];
             const noteIndex = MAJOR_SCALE_RATIOS.findIndex(n => n.key === key);
-            const plate = plates.find(p => p.userData.note.key === key);
+            const noteKey = key;
             
-            if (plate) {
-                const noteKey = key;
-                playPlate(plate, noteIndex, noteKey);
+            // Visual feedback: activate corresponding button
+            const button = buttonByKey[key];
+            if (button) {
+                button.classList.add('active');
+                // Apply mode color as background when active (darker version)
+                const modeColor = MODE_VISUALS[currentMode].rimColor;
+                const activeColor = '#' + modeColor.toString(16).padStart(6, '0');
+                button.style.background = activeColor;
+                button.style.borderRightColor = activeColor;
+                button.style.borderBottomColor = activeColor;
             }
+            
+            playNoteForButton(noteIndex, noteKey);
         });
         
         // Release phase: Stop note/chord when key is released
@@ -608,13 +723,20 @@
             
             pressedKeys.delete(key);
             
-            const noteKey = key;
-            const plate = plates.find(p => p.userData.note.key === key);
-            
-            // Stop the sound (release phase)
-            if (plate) {
-                stopPlate(plate, noteKey);
+            // Visual feedback: deactivate corresponding button
+            const button = buttonByKey[key];
+            if (button) {
+                button.classList.remove('active');
+                
+                // Reset to mode-tinted color
+                const modeTint = MODE_VISUALS[currentMode].tintColor;
+                button.style.background = modeTint;
+                button.style.borderRightColor = '#e0e0e0';
+                button.style.borderBottomColor = '#e0e0e0';
             }
+            
+            const noteKey = key;
+            stopNoteByKey(noteKey);
         });
         
         // Stop all notes if window loses focus (prevents stuck notes)
@@ -622,194 +744,18 @@
             stopAllNotes();
             pressedKeys.clear();
             
-            // Reset all plates visually to base mode state
-            const modeVisual = MODE_VISUALS[currentMode];
-            plates.forEach(plate => {
-                plate.material.emissiveIntensity = modeVisual.baseEmissive;
-                plate.scale.set(1, 1, 1);
+            // Reset all button states
+            document.querySelectorAll('.mobile-note-button').forEach(button => {
+                button.classList.remove('active');
+                
+                // Reset to mode-tinted color
+                const modeTint = MODE_VISUALS[currentMode].tintColor;
+                button.style.background = modeTint;
+                button.style.borderRightColor = '#e0e0e0';
+                button.style.borderBottomColor = '#e0e0e0';
+                button.userData = null;
             });
         });
-        
-        // Function to update label positions based on 3D plate positions
-        function updateLabelPositions() {
-            plates.forEach((plate) => {
-                const label = plate.userData.label;
-                if (!label) return;
-                
-                // Get 3D position
-                const vector = new THREE.Vector3();
-                plate.getWorldPosition(vector);
-                
-                // Project to 2D screen coordinates
-                vector.project(camera);
-                
-                // Convert to pixel coordinates
-                const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
-                const y = (-vector.y * 0.5 + 0.5) * window.innerHeight;
-                
-                // Update label position
-                label.style.left = x + 'px';
-                label.style.top = y + 'px';
-            });
-        }
-        
-        // Animation loop
-        function animate() {
-            requestAnimationFrame(animate);
-            
-            const time = Date.now() * 0.001;
-            
-            // Animate plates floating
-            plates.forEach((plate, index) => {
-                // Floating motion
-                plate.position.y = plate.userData.initialY + Math.sin(time * plate.userData.floatSpeed + index) * plate.userData.floatAmplitude;
-                
-                // Slow rotation
-                plate.rotation.z += plate.userData.rotationSpeed;
-                
-                // Smooth scale animation back to normal
-                if (plate.scale.x > 1) {
-                    plate.scale.lerp(new THREE.Vector3(1, 1, 1), 0.1);
-                }
-            });
-            
-            // Update label positions
-            updateLabelPositions();
-            
-            renderer.render(scene, camera);
-        }
-
-            // Handle window resize
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                updateLabelPositions();
-            });
-            
-        // Mouse interaction with plates
-        let isMouseDown = false;
-        let activeMousePlate = null;
-        let activeMouseNoteKey = null;
-        let activeMouseNoteIndex = null;
-        
-        renderer.domElement.addEventListener('mousedown', (event) => {
-            isMouseDown = true;
-            const plate = getPlateFromCoordinates(event.clientX, event.clientY);
-            if (plate) {
-                activeMousePlate = plate;
-                const noteIndex = plates.indexOf(plate);
-                const noteKey = `mouse-${noteIndex}`;
-                activeMouseNoteKey = noteKey;
-                activeMouseNoteIndex = noteIndex;
-                playPlate(plate, noteIndex, noteKey);
-            }
-        });
-        
-        renderer.domElement.addEventListener('mousemove', (event) => {
-            if (isMouseDown && activeMousePlate) {
-                const plate = getPlateFromCoordinates(event.clientX, event.clientY);
-                // If mouse moved off the plate, stop the sound
-                if (!plate || plate !== activeMousePlate) {
-                    stopPlate(activeMousePlate, activeMouseNoteKey);
-                    activeMousePlate = null;
-                    activeMouseNoteKey = null;
-                    activeMouseNoteIndex = null;
-                }
-            }
-        });
-        
-        renderer.domElement.addEventListener('mouseup', (event) => {
-            if (isMouseDown && activeMousePlate) {
-                stopPlate(activeMousePlate, activeMouseNoteKey);
-                activeMousePlate = null;
-                activeMouseNoteKey = null;
-                activeMouseNoteIndex = null;
-            }
-            isMouseDown = false;
-        });
-        
-        renderer.domElement.addEventListener('mouseleave', (event) => {
-            if (isMouseDown && activeMousePlate) {
-                stopPlate(activeMousePlate, activeMouseNoteKey);
-                activeMousePlate = null;
-                activeMouseNoteKey = null;
-                activeMouseNoteIndex = null;
-            }
-            isMouseDown = false;
-        });
-        
-        // Touch interaction with plates
-        renderer.domElement.addEventListener('touchstart', (event) => {
-            event.preventDefault();
-            for (let i = 0; i < event.touches.length; i++) {
-                const touch = event.touches[i];
-                const plate = getPlateFromCoordinates(touch.clientX, touch.clientY);
-                if (plate && !activeTouches.has(touch.identifier)) {
-                    const noteIndex = plates.indexOf(plate);
-                    const noteKey = `touch-${touch.identifier}-${noteIndex}`;
-                    activeTouches.set(touch.identifier, { plate, noteKey, noteIndex });
-                    playPlate(plate, noteIndex, noteKey);
-                }
-            }
-        });
-        
-        renderer.domElement.addEventListener('touchmove', (event) => {
-            event.preventDefault();
-            for (let i = 0; i < event.touches.length; i++) {
-                const touch = event.touches[i];
-                const touchData = activeTouches.get(touch.identifier);
-                if (touchData) {
-                    const plate = getPlateFromCoordinates(touch.clientX, touch.clientY);
-                    // If touch moved off the plate, stop the sound
-                    if (!plate || plate !== touchData.plate) {
-                        stopPlate(touchData.plate, touchData.noteKey);
-                        activeTouches.delete(touch.identifier);
-                    }
-                } else {
-                    // New touch on a plate
-                    const plate = getPlateFromCoordinates(touch.clientX, touch.clientY);
-                    if (plate) {
-                        const noteIndex = plates.indexOf(plate);
-                        const noteKey = `touch-${touch.identifier}-${noteIndex}`;
-                        activeTouches.set(touch.identifier, { plate, noteKey, noteIndex });
-                        playPlate(plate, noteIndex, noteKey);
-                    }
-                }
-            }
-        });
-        
-        renderer.domElement.addEventListener('touchend', (event) => {
-            event.preventDefault();
-            for (let i = 0; i < event.changedTouches.length; i++) {
-                const touch = event.changedTouches[i];
-                const touchData = activeTouches.get(touch.identifier);
-                if (touchData) {
-                    stopPlate(touchData.plate, touchData.noteKey);
-                    activeTouches.delete(touch.identifier);
-                }
-            }
-        });
-        
-        renderer.domElement.addEventListener('touchcancel', (event) => {
-            event.preventDefault();
-            for (let i = 0; i < event.changedTouches.length; i++) {
-                const touch = event.changedTouches[i];
-                const touchData = activeTouches.get(touch.identifier);
-                if (touchData) {
-                    stopPlate(touchData.plate, touchData.noteKey);
-                    activeTouches.delete(touch.identifier);
-                }
-            }
-        });
-        
-        // Prevent context menu on long press (mobile)
-        renderer.domElement.addEventListener('contextmenu', (event) => {
-            event.preventDefault();
-        });
-        
-        // Start animation
-            animate();
     </script>
 </body>
 </html>
