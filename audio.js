@@ -14,7 +14,15 @@
 //   Available extensions: 'seventh', 'minorSeventh', 'ninth', 'eleventh', 'thirteenth'
 //
 // Root frequency (can be changed, e.g., 432Hz, 440Hz, etc.)
-const ROOT_FREQUENCY = 261.63; // C4 (middle C) - change to 432 for A4=432Hz tuning
+let ROOT_FREQUENCY = 261.63; // C4 (middle C) - change to 432 for A4=432Hz tuning
+
+// Function to update root frequency (for settings)
+function updateRootFrequency(newFrequency) {
+    ROOT_FREQUENCY = newFrequency;
+}
+
+// Make updateRootFrequency globally accessible
+window.updateRootFrequency = updateRootFrequency;
 
 // Major scale ratios (Just Intonation - pure ratios)
 // These ratios are relative to the root frequency
@@ -215,6 +223,9 @@ function getJazz13Extensions(noteIndex) {
 // Create WaterSynth instance for sound generation
 let waterSynth = new WaterSynth();
 let audioContext = waterSynth.audioContext;
+
+// Make waterSynth globally accessible for settings
+window.waterSynth = waterSynth;
 
 // Bass mode - adds bass note one octave lower
 window.bassMode = false;
