@@ -228,7 +228,7 @@ let audioContext = waterSynth.audioContext;
 window.waterSynth = waterSynth;
 
 // Bass mode - adds bass note one octave lower
-window.bassMode = false;
+window.bassMode = true;
 
 // Track active notes/chords (key -> array of {oscillator, gainNode})
 let activeNotes = {};
