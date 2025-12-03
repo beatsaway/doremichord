@@ -1297,6 +1297,35 @@
         // Initialize note button colors
         updateNoteButtonColors();
         
+        // Visual Press Indicator - Define early so button handlers can access it
+        const pressIndicators = new Map(); // Track indicators by touch/mouse ID
+        
+        function createPressIndicator(x, y, id) {
+            const indicator = document.createElement('div');
+            indicator.className = 'press-indicator';
+            indicator.style.left = x + 'px';
+            indicator.style.top = y + 'px';
+            document.body.appendChild(indicator);
+            
+            // Store reference
+            pressIndicators.set(id, indicator);
+            
+            return indicator;
+        }
+        
+        function removePressIndicator(id) {
+            const indicator = pressIndicators.get(id);
+            if (indicator) {
+                indicator.classList.add('fade-out');
+                setTimeout(() => {
+                    if (indicator.parentNode) {
+                        indicator.parentNode.removeChild(indicator);
+                    }
+                    pressIndicators.delete(id);
+                }, 200);
+            }
+        }
+
         // Create mobile-friendly buttons
         // Layout: Row 1 = La, Ti, Do, Re | Row 2 = Mi, Fa, So, La
         const mobileButtonsContainer = document.getElementById('mobile-buttons');
@@ -1375,6 +1404,18 @@
                 if (!isButtonPressed || !button.userData) return;
                 
                 e.preventDefault();
+                
+                // Update press indicator position
+                if (button.userData.indicatorId) {
+                    const x = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
+                    const y = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
+                    const indicator = pressIndicators.get(button.userData.indicatorId);
+                    if (indicator) {
+                        indicator.style.left = x + 'px';
+                        indicator.style.top = y + 'px';
+                    }
+                }
+                
                 const yPosition = getYPosition(e);
                 const pitchBendMultiplier = calculatePitchBend(yPosition);
                 
@@ -1392,6 +1433,13 @@
                 const noteIndex = parseInt(button.getAttribute('data-note-index'));
                 const noteKey = `mobile-${index}-${Date.now()}`;
                 
+                // Create press indicator for touch/mouse
+                const x = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
+                const y = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
+                const touchId = e.touches && e.touches.length > 0 ? e.touches[0].identifier : null;
+                const indicatorId = touchId !== null ? 'touch-' + touchId : 'button-' + Date.now();
+                createPressIndicator(x, y, indicatorId);
+                
                 playNoteForButton(noteIndex, noteKey);
                 button.classList.add('active');
                 
@@ -1402,7 +1450,8 @@
                 button.style.borderRightColor = activeColor;
                 button.style.borderBottomColor = activeColor;
                 
-                button.userData = { noteKey, noteIndex };
+                // Store userData with indicatorId
+                button.userData = { noteKey, noteIndex, indicatorId };
                 
                 // Initialize pitch bend based on initial position
                 const yPosition = getYPosition(e);
@@ -1418,6 +1467,11 @@
                 isButtonPressed = false;
                 
                 if (button.userData) {
+                    // Remove press indicator
+                    if (button.userData.indicatorId) {
+                        removePressIndicator(button.userData.indicatorId);
+                    }
+                    
                     // Reset pitch to original before stopping
                     if (window.updatePitchBend) {
                         window.updatePitchBend(button.userData.noteKey, 1.0);
@@ -1837,48 +1891,21 @@
         // Initialize fastcontrol display
         updateFastcontrolDisplay();
 
-        // Visual Press Indicator
-        const pressIndicators = new Map(); // Track indicators by touch/mouse ID
-        
-        function createPressIndicator(x, y, id) {
-            const indicator = document.createElement('div');
-            indicator.className = 'press-indicator';
-            indicator.style.left = x + 'px';
-            indicator.style.top = y + 'px';
-            document.body.appendChild(indicator);
-            
-            // Store reference
-            pressIndicators.set(id, indicator);
-            
-            return indicator;
-        }
-        
-        function removePressIndicator(id) {
-            const indicator = pressIndicators.get(id);
-            if (indicator) {
-                indicator.classList.add('fade-out');
-                setTimeout(() => {
-                    if (indicator.parentNode) {
-                        indicator.parentNode.removeChild(indicator);
-                    }
-                    pressIndicators.delete(id);
-                }, 200);
-            }
-        }
-
         // Track active touches and mouse
         const activeTouches = new Map();
         let mouseDownId = null;
 
-        // Handle touch events
+        // Handle touch events (capture phase to catch before button handlers)
         document.addEventListener('touchstart', (e) => {
             e.touches.forEach(touch => {
-                if (!activeTouches.has(touch.identifier)) {
+                // Only create indicator if not touching a button
+                const target = e.target;
+                if (!target.closest('.mobile-note-button') && !activeTouches.has(touch.identifier)) {
                     activeTouches.set(touch.identifier, true);
                     createPressIndicator(touch.clientX, touch.clientY, 'touch-' + touch.identifier);
                 }
             });
-        }, { passive: true });
+        }, { passive: true, capture: true });
 
         document.addEventListener('touchmove', (e) => {
             e.touches.forEach(touch => {
@@ -1904,10 +1931,13 @@
             });
         }, { passive: true });
 
-        // Handle mouse events
+        // Handle mouse events (only for non-button areas)
         document.addEventListener('mousedown', (e) => {
-            mouseDownId = 'mouse-' + Date.now();
-            createPressIndicator(e.clientX, e.clientY, mouseDownId);
+            // Only create indicator if not clicking on a button
+            if (!e.target.closest('.mobile-note-button')) {
+                mouseDownId = 'mouse-' + Date.now();
+                createPressIndicator(e.clientX, e.clientY, mouseDownId);
+            }
         });
 
         document.addEventListener('mousemove', (e) => {
