@@ -697,7 +697,6 @@
             letter-spacing: 1px;
             position: relative;
             z-index: 1;
-            text-transform: uppercase;
             transition: transform 0.15s ease;
             color: inherit;
         }
@@ -1010,6 +1009,47 @@
                 padding: 20px;
             }
         }
+
+        /* Visual Press Indicator */
+        .press-indicator {
+            position: fixed;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            transform: translate(-50%, -50%);
+            opacity: 1;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.5) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0) 70%);
+            transition: opacity 0.2s ease-out;
+            animation: pressAppear 0.15s ease-out forwards, pressPulse 0.8s ease-in-out infinite;
+        }
+
+        .press-indicator.fade-out {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(1.2);
+            animation: none;
+        }
+
+        @keyframes pressAppear {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        @keyframes pressPulse {
+            0%, 100% {
+                transform: translate(-50%, -50%) scale(1);
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.15);
+            }
+        }
     </style>
 </head>
 <body>
@@ -1101,9 +1141,9 @@
             <div class="settings-section">
                 <label class="settings-label" for="pitch-slider">Fundamental Pitch</label>
                 <div class="settings-slider-container">
-                    <input type="range" id="pitch-slider" class="settings-slider" min="0" max="24" step="1" value="24">
+                    <input type="range" id="pitch-slider" class="settings-slider" min="0" max="24" step="1" value="12">
                     <span class="settings-value" id="pitch-value">
-                        <span class="pitch-note-name">C5</span> (523.25 Hz)
+                        <span class="pitch-note-name">C4</span> (261.63 Hz)
                     </span>
                 </div>
             </div>
@@ -1633,7 +1673,7 @@
         const initialFreq = getFrequencyFromHalfSteps(initialHalfSteps);
         pitchValue.innerHTML = `<span class="pitch-note-name">${noteNames[initialHalfSteps]}</span> (${initialFreq.toFixed(2)} Hz)`;
         
-        // Make sure initial root frequency matches slider (C5 = 24 half steps from C3)
+        // Make sure initial root frequency matches slider (C4 = 12 half steps from C3)
         if (typeof updateRootFrequency === 'function') {
             updateRootFrequency(initialFreq);
         }
@@ -1796,6 +1836,104 @@
 
         // Initialize fastcontrol display
         updateFastcontrolDisplay();
+
+        // Visual Press Indicator
+        const pressIndicators = new Map(); // Track indicators by touch/mouse ID
+        
+        function createPressIndicator(x, y, id) {
+            const indicator = document.createElement('div');
+            indicator.className = 'press-indicator';
+            indicator.style.left = x + 'px';
+            indicator.style.top = y + 'px';
+            document.body.appendChild(indicator);
+            
+            // Store reference
+            pressIndicators.set(id, indicator);
+            
+            return indicator;
+        }
+        
+        function removePressIndicator(id) {
+            const indicator = pressIndicators.get(id);
+            if (indicator) {
+                indicator.classList.add('fade-out');
+                setTimeout(() => {
+                    if (indicator.parentNode) {
+                        indicator.parentNode.removeChild(indicator);
+                    }
+                    pressIndicators.delete(id);
+                }, 200);
+            }
+        }
+
+        // Track active touches and mouse
+        const activeTouches = new Map();
+        let mouseDownId = null;
+
+        // Handle touch events
+        document.addEventListener('touchstart', (e) => {
+            e.touches.forEach(touch => {
+                if (!activeTouches.has(touch.identifier)) {
+                    activeTouches.set(touch.identifier, true);
+                    createPressIndicator(touch.clientX, touch.clientY, 'touch-' + touch.identifier);
+                }
+            });
+        }, { passive: true });
+
+        document.addEventListener('touchmove', (e) => {
+            e.touches.forEach(touch => {
+                const indicator = pressIndicators.get('touch-' + touch.identifier);
+                if (indicator) {
+                    indicator.style.left = touch.clientX + 'px';
+                    indicator.style.top = touch.clientY + 'px';
+                }
+            });
+        }, { passive: true });
+
+        document.addEventListener('touchend', (e) => {
+            e.changedTouches.forEach(touch => {
+                activeTouches.delete(touch.identifier);
+                removePressIndicator('touch-' + touch.identifier);
+            });
+        }, { passive: true });
+
+        document.addEventListener('touchcancel', (e) => {
+            e.changedTouches.forEach(touch => {
+                activeTouches.delete(touch.identifier);
+                removePressIndicator('touch-' + touch.identifier);
+            });
+        }, { passive: true });
+
+        // Handle mouse events
+        document.addEventListener('mousedown', (e) => {
+            mouseDownId = 'mouse-' + Date.now();
+            createPressIndicator(e.clientX, e.clientY, mouseDownId);
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (mouseDownId) {
+                const indicator = pressIndicators.get(mouseDownId);
+                if (indicator) {
+                    indicator.style.left = e.clientX + 'px';
+                    indicator.style.top = e.clientY + 'px';
+                }
+            }
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            if (mouseDownId) {
+                removePressIndicator(mouseDownId);
+                mouseDownId = null;
+            }
+        });
+
+        // Handle mouse leave (in case mouse is released outside window)
+        document.addEventListener('mouseleave', (e) => {
+            if (mouseDownId) {
+                removePressIndicator(mouseDownId);
+                mouseDownId = null;
+            }
+        });
     </script>
 </body>
 </html>
