@@ -1,0 +1,1877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Doremi Chord</title>
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+
+        body {
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden;
+            background: #0a0a0a;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            touch-action: manipulation;
+            height: 100vh;
+            height: 100dvh;
+        }
+
+        #scene-container { 
+            display: none;
+        }
+
+        .key-shortcut {
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 11px;
+            color: #666666;
+            font-weight: 400;
+            margin-left: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .key-shortcut::before {
+            content: '·';
+            margin-right: 6px;
+            color: #404040;
+        }
+
+        #mode-buttons {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0;
+            z-index: 1000;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #bass-toggle {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            width: 100%;
+        }
+
+        .bass-toggle-button {
+            background: #1a1a1a;
+            color: #a0a0a0;
+            border: none;
+            border-right: 1px solid #2a2a2a;
+            border-bottom: 1px solid #2a2a2a;
+            padding: 16px;
+            border-radius: 0;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bass-toggle-button:last-child {
+            border-right: none;
+        }
+
+        .settings-button {
+            background: #1a1a1a;
+            color: #a0a0a0;
+            border: none;
+            border-bottom: 1px solid #2a2a2a;
+            padding: 16px;
+            border-radius: 0;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .settings-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 0;
+        }
+
+
+        .settings-button:active {
+            transform: scale(0.97) translateY(0);
+        }
+
+        .settings-button > * {
+            position: relative;
+            z-index: 1;
+            color: inherit;
+        }
+
+        .bass-toggle-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 0;
+        }
+
+        .bass-toggle-button::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: currentColor;
+            transition: width 0.2s ease;
+            z-index: 2;
+        }
+
+        .bass-toggle-button.active::after {
+            width: 24px;
+        }
+
+
+        .bass-toggle-button:active {
+            transform: scale(0.97) translateY(0);
+        }
+
+        .bass-toggle-button.active {
+            background: #2a2a2a;
+            color: #ffffff;
+        }
+
+        .bass-toggle-button.active::before {
+            opacity: 1;
+        }
+
+        .bass-toggle-button > * {
+            position: relative;
+            z-index: 1;
+            color: inherit;
+        }
+
+        .mode-buttons-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0;
+            width: 100%;
+        }
+
+        .mode-button {
+            background: #1a1a1a;
+            color: #a0a0a0;
+            border: none;
+            border-right: 1px solid #2a2a2a;
+            padding: 16px 8px;
+            border-radius: 0;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .mode-button:last-child {
+            border-right: none;
+        }
+
+        .mode-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 0;
+        }
+
+        .mode-button::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: currentColor;
+            transition: width 0.2s ease;
+            z-index: 2;
+        }
+
+        .mode-button.active::after {
+            width: 24px;
+        }
+
+
+        .mode-button[data-mode="0"]:active {
+            transform: scale(0.96) translateY(0);
+        }
+
+        .mode-button[data-mode="1"]:active {
+            transform: scale(0.96) translateY(0);
+        }
+
+        .mode-button[data-mode="2"]:active {
+            transform: scale(0.96) translateY(0);
+        }
+
+        .mode-button[data-mode="3"]:active {
+            transform: scale(0.96) translateY(0);
+        }
+
+        .mode-button[data-mode="0"] {
+            background: #1a1a1a;
+            color: #00ff9f;
+        }
+
+        .mode-button[data-mode="0"].active {
+            background: rgba(0, 255, 159, 0.15);
+            color: #00ff9f;
+        }
+
+        .mode-button[data-mode="0"].active::before {
+            opacity: 1;
+        }
+
+        .mode-button[data-mode="0"].active:hover {
+            color: #00ff9f;
+        }
+
+        .mode-button[data-mode="0"].active:active {
+            color: #00ff9f;
+        }
+
+        .mode-button[data-mode="1"] {
+            background: #1a1a1a;
+            color: #00b8ff;
+        }
+
+        .mode-button[data-mode="1"].active {
+            background: rgba(0, 184, 255, 0.15);
+            color: #00b8ff;
+        }
+
+        .mode-button[data-mode="1"].active::before {
+            opacity: 1;
+        }
+
+        .mode-button[data-mode="1"].active:hover {
+            color: #00b8ff;
+        }
+
+        .mode-button[data-mode="1"].active:active {
+            color: #00b8ff;
+        }
+
+        .mode-button[data-mode="2"] {
+            background: #1a1a1a;
+            color: #001eff;
+        }
+
+        .mode-button[data-mode="2"].active {
+            background: rgba(0, 30, 255, 0.15);
+            color: #001eff;
+        }
+
+        .mode-button[data-mode="2"].active::before {
+            opacity: 1;
+        }
+
+        .mode-button[data-mode="2"].active:hover {
+            color: #001eff;
+        }
+
+        .mode-button[data-mode="2"].active:active {
+            color: #001eff;
+        }
+
+        .mode-button[data-mode="3"] {
+            background: #1a1a1a;
+            color: #bd00ff;
+        }
+
+        .mode-button[data-mode="3"].active {
+            background: rgba(189, 0, 255, 0.15);
+            color: #bd00ff;
+        }
+
+        .mode-button[data-mode="3"].active::before {
+            opacity: 1;
+        }
+
+        .mode-button[data-mode="3"].active:hover {
+            color: #bd00ff;
+        }
+
+        .mode-button[data-mode="3"].active:active {
+            color: #bd00ff;
+        }
+
+        .mode-button > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        #app-info {
+            position: fixed;
+            top: 100px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: 100;
+            padding: 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #fastcontrol-container {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            min-height: 200px;
+            display: grid;
+            grid-template-columns: 10% 80% 10%;
+            align-items: center;
+        }
+
+        .fastcontrol {
+            display: none;
+            width: 100%;
+            opacity: 0;
+            transform: translateX(0);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+        }
+
+        .fastcontrol.active {
+            display: grid;
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: auto;
+        }
+
+        .fastcontrol.slide-out-left {
+            display: grid;
+            transform: translateX(-100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .fastcontrol.slide-out-right {
+            display: grid;
+            transform: translateX(100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .fastcontrol.slide-in-left {
+            display: grid;
+            animation: slideInFromLeft 0.3s ease forwards;
+            pointer-events: auto;
+        }
+
+        .fastcontrol.slide-in-right {
+            display: grid;
+            animation: slideInFromRight 0.3s ease forwards;
+            pointer-events: auto;
+        }
+
+        @keyframes slideInFromLeft {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInFromRight {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .fastcontrol-wrapper {
+            grid-column: 2;
+            position: relative;
+            width: 100%;
+            min-height: 200px;
+        }
+
+        .fastcontrol {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+     
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+        }
+
+        .fastcontrol-nav-arrow {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #666666;
+            cursor: pointer;
+            padding: 12px 0;
+            transition: all 0.2s ease;
+            opacity: 0.7;
+        
+            line-height: 1;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 400;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            width: 100%;
+            position: relative;
+            z-index: 10;
+        }
+
+        #fastcontrol-prev {
+            grid-column: 1;
+            justify-content: flex-start;
+        }
+
+        #fastcontrol-next {
+            grid-column: 3;
+            justify-content: flex-end;
+        }
+
+        .fastcontrol-nav-arrow:hover {
+            opacity: 1;
+            color: #a0a0a0;
+        }
+
+        .fastcontrol-nav-arrow:active {
+            opacity: 0.5;
+        }
+
+        .fastcontrol-nav-arrow:disabled {
+            opacity: 0.2;
+            cursor: not-allowed;
+        }
+
+        .fastcontrol-main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            text-align: center;
+        }
+
+        .fastcontrol-slider-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: #808080;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .fastcontrol-slider {
+            width: 100%;
+            height: 2px;
+            border-radius: 1px;
+            background: #2a2a2a;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            margin: 0;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        .fastcontrol-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #a0a0a0;
+            cursor: pointer;
+            box-shadow: 0 0 0 2px #0a0a0a;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .fastcontrol-slider::-webkit-slider-thumb:hover {
+            background: #ffffff;
+            transform: scale(1.1);
+        }
+
+        .fastcontrol-slider::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #a0a0a0;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 0 2px #0a0a0a;
+            transition: all 0.2s ease;
+        }
+
+        .fastcontrol-slider::-moz-range-thumb:hover {
+            background: #ffffff;
+            transform: scale(1.1);
+        }
+
+        .fastcontrol-slider-value {
+            font-size: 13px;
+            font-weight: 400;
+            color: #a0a0a0;
+            margin-top: 12px;
+            letter-spacing: 0.3px;
+        }
+
+        .app-title {
+            font-size: 32px;
+            font-weight: 600;
+            color: #ffffff;
+            margin: 0 0 8px 0;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+            white-space: nowrap;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.2;
+        }
+
+        .app-title:hover {
+            opacity: 0.7;
+        }
+
+        .app-tagline {
+            font-size: 16px;
+            font-weight: 400;
+            color: #808080;
+            margin: 0 0 12px 0;
+            letter-spacing: 0.3px;
+            line-height: 1.4;
+        }
+
+        .app-footer {
+            font-size: 13px;
+            font-weight: 400;
+            color: #666666;
+            margin: 0;
+            letter-spacing: 0.3px;
+            line-height: 1.4;
+        }
+
+        .app-footer a {
+            color: #a0a0a0;
+            text-decoration: none;
+            transition: color 0.2s ease;
+            font-weight: 500;
+        }
+
+        .app-footer a:hover {
+            color: #ffffff;
+        }
+
+        #mobile-buttons {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            grid-auto-flow: row;
+            gap: 0;
+            padding: 0;
+            background: #1a1a1a;
+            z-index: 2000;
+            border-top: 1px solid #2a2a2a;
+            height: calc(50vh);
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .mobile-note-button {
+            border: none;
+            border-right: 1px solid #2a2a2a;
+            border-bottom: 1px solid #2a2a2a;
+            border-radius: 0;
+            background: #1a1a1a;
+            color: #808080;
+            font-size: 18px;
+            font-weight: 500;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+        }
+
+        .mobile-note-button:nth-child(4n) {
+            border-right: none;
+        }
+
+        .mobile-note-button:nth-child(n+5) {
+            border-bottom: none;
+        }
+
+        .mobile-note-button.bass-active {
+            box-shadow: inset 0 0 0 1.5px #404040;
+        }
+
+        .mobile-note-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: currentColor;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 0;
+        }
+
+        .mobile-note-button:hover {
+            background: #2a2a2a;
+        }
+
+        .mobile-note-button:active {
+            transform: scale(0.98);
+        }
+
+        .mobile-note-button.active {
+            color: #fff !important;
+            transform: scale(1);
+        }
+
+        .mobile-note-button.active::before {
+            opacity: 0.15;
+        }
+
+        .mobile-note-button .note-name {
+            font-size: 42px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            line-height: 1;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 1;
+            transition: transform 0.15s ease;
+            color: inherit;
+        }
+
+        .mobile-note-button.active .note-name {
+            color: #fff !important;
+        }
+
+        .mobile-note-button:active .note-name {
+            transform: scale(0.9);
+        }
+
+        .mobile-note-button.active .note-name {
+            transform: scale(1.05);
+        }
+
+        .mobile-note-button .note-key {
+            font-size: 11px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-weight: 500;
+            padding: 4px 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            position: relative;
+            z-index: 1;
+            color: #808080;
+            transition: all 0.15s ease;
+        }
+
+        .mobile-note-button.active .note-key {
+            background: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.95) !important;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-note-button .note-name {
+                font-size: 36px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .mobile-note-button .note-name {
+                font-size: 32px;
+            }
+            
+            .mobile-note-button .note-key {
+                font-size: 10px;
+                padding: 3px 8px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .mobile-note-button .note-name {
+                font-size: 28px;
+            }
+        }
+
+        /* Settings Modal - Dutch Minimalist Design */
+        .settings-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+            backdrop-filter: blur(4px);
+        }
+
+        .settings-modal.active {
+            display: flex;
+        }
+
+        .settings-content {
+            background: #1a1a1a;
+            border-radius: 0;
+            padding: 48px 40px;
+            max-width: 360px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            position: relative;
+            border: 1px solid #2a2a2a;
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 48px;
+        }
+
+        .settings-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #ffffff;
+            margin: 0;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .settings-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #808080;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s ease;
+            line-height: 1;
+        }
+
+        .settings-close:hover {
+            color: #ffffff;
+        }
+
+        .settings-section {
+            margin-bottom: 40px;
+        }
+
+        .settings-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .settings-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 500;
+            color: #808080;
+            margin-bottom: 16px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .settings-slider-container {
+            position: relative;
+            margin-bottom: 12px;
+        }
+
+        .settings-slider {
+            width: 100%;
+            height: 2px;
+            border-radius: 1px;
+            background: #2a2a2a;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .settings-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #a0a0a0;
+            cursor: pointer;
+            box-shadow: 0 0 0 2px #1a1a1a;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .settings-slider::-webkit-slider-thumb:hover {
+            background: #ffffff;
+            transform: scale(1.1);
+        }
+
+        .settings-slider::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #a0a0a0;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 0 2px #1a1a1a;
+            transition: all 0.2s ease;
+        }
+
+        .settings-slider::-moz-range-thumb:hover {
+            background: #ffffff;
+            transform: scale(1.1);
+        }
+
+        .settings-value {
+            font-size: 13px;
+            font-weight: 400;
+            color: #a0a0a0;
+            margin-top: 12px;
+            text-align: left;
+            letter-spacing: 0.3px;
+        }
+
+        .pitch-note-name {
+            font-weight: 500;
+        }
+
+        /* Info Modal - Dutch Minimalist Design */
+        .info-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+            backdrop-filter: blur(4px);
+        }
+
+        .info-modal.active {
+            display: flex;
+        }
+
+        .info-content {
+            background: #1a1a1a;
+            border-radius: 0;
+            padding: 48px 40px;
+            max-width: 420px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            position: relative;
+            border: 1px solid #2a2a2a;
+        }
+
+        .info-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 32px;
+        }
+
+        .info-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #ffffff;
+            margin: 0;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .info-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #808080;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s ease;
+            line-height: 1;
+        }
+
+        .info-close:hover {
+            color: #ffffff;
+        }
+
+        .info-body {
+            font-size: 13px;
+            font-weight: 400;
+            color: #a0a0a0;
+            line-height: 1.8;
+            letter-spacing: 0.2px;
+        }
+
+        .info-body p {
+            margin: 0 0 20px 0;
+        }
+
+        .info-body p:last-child {
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 480px) {
+            .settings-content {
+                padding: 40px 32px;
+                max-width: calc(100% - 40px);
+            }
+
+            .settings-section {
+                margin-bottom: 36px;
+            }
+
+            #app-info {
+                left: 0;
+                right: 0;
+                text-align: center;
+                width: 100%;
+                padding: 20px;
+            }
+        }
+
+        #hold-indicator {
+            position: fixed;
+            font-size: 64px;
+            pointer-events: none;
+            z-index: 2500;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+            user-select: none;
+            transform: translate(-40%, -10%);
+            will-change: top, left;
+        }
+
+        #hold-indicator.visible {
+            opacity: 1;
+            animation: pulse 0.6s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: translate(-40%, -10%) scale(1);
+            }
+            50% {
+                transform: translate(-40%, -10%) scale(1.2);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="scene-container"></div>
+    <div id="mode-buttons">
+        <div id="bass-toggle">
+            <div class="bass-toggle-button">Bass <span class="key-shortcut">Spacebar</span></div>
+            <div class="settings-button">⚙️Settings</div>
+        </div>
+        <div class="mode-buttons-row">
+            <div class="mode-button" data-mode="0">Note mode <span class="key-shortcut">1</span></div>
+            <div class="mode-button" data-mode="1">Diatonic mode <span class="key-shortcut">2</span></div>
+            <div class="mode-button" data-mode="2">Jazz7 mode <span class="key-shortcut">3</span></div>
+            <div class="mode-button" data-mode="3">Jazz79 mode <span class="key-shortcut">4</span></div>
+        </div>
+    </div>
+    
+    <!-- App Info Section -->
+    <div id="app-info">
+        <div id="fastcontrol-container">
+            <!-- Fixed Navigation Arrows -->
+            <button class="fastcontrol-nav-arrow" id="fastcontrol-prev" disabled>◀</button>
+            
+            <!-- Fastcontrol Wrapper (middle 80%) -->
+            <div class="fastcontrol-wrapper">
+                <!-- Fastcontrol 1: App Info -->
+                <div class="fastcontrol active" id="fastcontrol-1">
+                    <div class="fastcontrol-main">
+                        <div class="app-title" id="app-title-click">Do Re Mi Chord</div>
+                        <div class="app-tagline">🎵 at your finger tip</div>
+                        <div class="app-footer">
+                            Developed by <a href="https://youtube.com/beatsaway" target="_blank">BeatsAway</a> <br>
+                            <a href="https://buymeacoffee.com/beatsaway" target="_blank">Support this developer</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Fastcontrol 2: Gate Control -->
+                <div class="fastcontrol" id="fastcontrol-2">
+                    <div class="fastcontrol-main">
+                        <div class="fastcontrol-slider-label">Gate</div>
+                        <input type="range" id="gate-slider" class="fastcontrol-slider" min="0" max="100" step="1" value="0">
+                        <div class="fastcontrol-slider-value" id="gate-value">0%</div>
+                        
+                        <div class="fastcontrol-slider-label" style="margin-top: 20px;">Speed</div>
+                        <input type="range" id="gate-speed-slider" class="fastcontrol-slider" min="0.1" max="0.75" step="0.01" value="0.1">
+                        <div class="fastcontrol-slider-value" id="gate-speed-value">0.1s</div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="fastcontrol-nav-arrow" id="fastcontrol-next">▶</button>
+        </div>
+    </div>
+    
+    <!-- Modern mobile note buttons -->
+    <div id="mobile-buttons">    </div>
+    
+    <!-- Hold Indicator -->
+    <div id="hold-indicator">👆</div>
+    
+    <!-- Info Modal -->
+    <div id="info-modal" class="info-modal">
+        <div class="info-content">
+            <div class="info-header">
+                <h2 class="info-title">About</h2>
+                <button class="info-close" id="info-close">&times;</button>
+            </div>
+            <div class="info-body">
+                <p>Do you know? You can play almost any songs by ear with just Do Re Mi Fa So La Ti notes!</p>
+                <p>This instrument 'DoReMiChord' is made exactly for that. Tune in ⚙️settings the right key of your favourite song and see if you can play along!</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="settings-modal">
+        <div class="settings-content">
+            <div class="settings-header">
+                <h2 class="settings-title">⚙️Settings</h2>
+                <button class="settings-close" id="settings-close">&times;</button>
+            </div>
+            
+            <div class="settings-section">
+                <label class="settings-label" for="volume-slider">Volume</label>
+                <div class="settings-slider-container">
+                    <input type="range" id="volume-slider" class="settings-slider" min="0" max="2" step="0.01" value="0.5">
+                    <span class="settings-value" id="volume-value">50%</span>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <label class="settings-label" for="pitch-slider">Fundamental Pitch</label>
+                <div class="settings-slider-container">
+                    <input type="range" id="pitch-slider" class="settings-slider" min="0" max="24" step="1" value="12">
+                    <span class="settings-value" id="pitch-value">
+                        <span class="pitch-note-name">C5</span> (523.25 Hz)
+                    </span>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <label class="settings-label" for="reverb-slider">Reverb Length</label>
+                <div class="settings-slider-container">
+                    <input type="range" id="reverb-slider" class="settings-slider" min="0.1" max="3" step="0.1" value="1.0">
+                    <span class="settings-value" id="reverb-value">1.0s</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="watersynth.js"></script>
+    <script src="audio.js"></script>
+    <script>
+        // Audio functions and notes are now in audio.js
+        
+        // Mode visual properties for button colors
+        const MODE_VISUALS = {
+            0: { rimColor: 0x00ff9f, tintColor: '#1a1a1a' },
+            1: { rimColor: 0x00b8ff, tintColor: '#1a1a1a' },
+            2: { rimColor: 0x001eff, tintColor: '#1a1a1a' },
+            3: { rimColor: 0xbd00ff, tintColor: '#1a1a1a' }
+        };
+        
+        // Function to update note button colors based on mode
+        function updateNoteButtonColors() {
+            const modeTint = MODE_VISUALS[currentMode].tintColor;
+            
+            document.querySelectorAll('.mobile-note-button').forEach(button => {
+                // Only update if button is not currently active
+                if (!button.classList.contains('active')) {
+                    // Use mode tint color directly (no individual note colors)
+                    button.style.background = modeTint;
+                }
+            });
+        }
+        
+        // Store note indices for audio playback (no plates needed)
+        const noteIndices = MAJOR_SCALE_RATIOS.map((_, i) => i);
+        
+        // Keyboard controls
+        const keyMap = {};
+        MAJOR_SCALE_RATIOS.forEach(note => {
+            if (note.key) {
+                keyMap[note.key] = note;
+            }
+        });
+        
+        // Track which keys are currently pressed (to prevent repeat triggers)
+        const pressedKeys = new Set();
+        
+        // Track mode: 0 = Note, 1 = Diatonic, 2 = Jazz7, 3 = Jazz79
+        let currentMode = 3; // 0 = Note mode, 1-3 = Chord modes (default: Jazz79 mode)
+        
+        // Mode names
+        const MODE_NAMES = ['Note', 'Diatonic', 'Jazz7', 'Jazz79'];
+        
+        // Function to update mode display
+        function updateModeDisplay() {
+            // Update visual state of mode buttons
+            document.querySelectorAll('.mode-button').forEach(btn => {
+                const mode = parseInt(btn.getAttribute('data-mode'));
+                if (mode === currentMode) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // Update note button colors based on mode
+            updateNoteButtonColors();
+        }
+        
+        // Handle mode button clicks
+        document.querySelectorAll('.mode-button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const mode = parseInt(btn.getAttribute('data-mode'));
+                currentMode = mode;
+                updateModeDisplay();
+            });
+        });
+        
+        // Function to update bass mode display
+        function updateBassDisplay() {
+            // Update bass toggle button
+            const bassToggleButton = document.querySelector('.bass-toggle-button');
+            if (bassToggleButton) {
+                if (window.bassMode) {
+                    bassToggleButton.classList.add('active');
+                } else {
+                    bassToggleButton.classList.remove('active');
+                }
+            }
+            
+            // Update border on note buttons when bass is active
+            document.querySelectorAll('.mobile-note-button').forEach(button => {
+                if (window.bassMode) {
+                    button.classList.add('bass-active');
+                } else {
+                    button.classList.remove('bass-active');
+                }
+            });
+        }
+        
+        // Handle bass toggle button click
+        document.querySelector('.bass-toggle-button')?.addEventListener('click', () => {
+            window.bassMode = !window.bassMode;
+            updateBassDisplay();
+        });
+        
+        // Handle mode selection (1, 2, 3, 4 keys) and bass toggle (Space)
+        document.addEventListener('keydown', (event) => {
+            // Handle mode selection with number keys
+            if (event.key === '1' && !event.repeat) {
+                currentMode = 0; // Note mode
+                updateModeDisplay();
+                return;
+            }
+            if (event.key === '2' && !event.repeat) {
+                currentMode = 1; // Diatonic
+                updateModeDisplay();
+                return;
+            }
+            if (event.key === '3' && !event.repeat) {
+                currentMode = 2; // Jazz7
+                updateModeDisplay();
+                return;
+            }
+            if (event.key === '4' && !event.repeat) {
+                currentMode = 3; // Jazz79
+                updateModeDisplay();
+                return;
+            }
+            
+            // Handle bass toggle (Space)
+            if (event.key === ' ' && !event.repeat) {
+                event.preventDefault(); // Prevent page scroll
+                window.bassMode = !window.bassMode;
+                updateBassDisplay();
+                return;
+            }
+        });
+        
+        // Initialize mode display
+        updateModeDisplay();
+        updateBassDisplay();
+        
+        // Initialize note button colors
+        updateNoteButtonColors();
+        
+        // Create mobile-friendly buttons
+        // Layout: Row 1 = La, Ti, Do, Re | Row 2 = Mi, Fa, So, La
+        const mobileButtonsContainer = document.getElementById('mobile-buttons');
+        const mobileButtons = [];
+        const buttonByKey = {}; // Map keyboard keys to button elements
+        const holdIndicator = document.getElementById('hold-indicator');
+        
+        MAJOR_SCALE_RATIOS.forEach((note, index) => {
+            const button = document.createElement('div');
+            button.className = 'mobile-note-button';
+            button.setAttribute('data-note-index', index);
+            button.setAttribute('data-note-key', note.key);
+            
+            const noteName = document.createElement('div');
+            noteName.className = 'note-name';
+            noteName.textContent = note.name.replace('Lower ', '');
+            
+            const noteKey = document.createElement('div');
+            noteKey.className = 'note-key';
+            noteKey.textContent = note.key.toUpperCase();
+            
+            button.appendChild(noteName);
+            button.appendChild(noteKey);
+            
+            // Touch/click handlers for mobile buttons
+            let isButtonPressed = false;
+            
+            // Pitch bend parameters
+            const PITCH_BEND_DEAD_ZONE = 8; // Percentage threshold before pitch changes (8%)
+            const PITCH_BEND_MAX = 30; // Maximum percentage offset (30%)
+            const HALF_STEPS_PER_PERCENT = 0.5 / 10; // 0.5 half-steps per 10% beyond dead zone
+            
+            // Helper function to get Y position from event
+            const getYPosition = (e) => {
+                if (e.touches && e.touches.length > 0) {
+                    const rect = button.getBoundingClientRect();
+                    return e.touches[0].clientY - rect.top;
+                } else {
+                    const rect = button.getBoundingClientRect();
+                    return e.clientY - rect.top;
+                }
+            };
+            
+            // Helper function to calculate pitch bend from Y position
+            const calculatePitchBend = (yPosition) => {
+                const rect = button.getBoundingClientRect();
+                const buttonHeight = rect.height;
+                const buttonCenter = buttonHeight / 2;
+                const offsetY = yPosition - buttonCenter;
+                const offsetPercent = (offsetY / buttonHeight) * 100;
+                
+                // Apply dead zone - no pitch change if within threshold
+                if (Math.abs(offsetPercent) < PITCH_BEND_DEAD_ZONE) {
+                    return 1.0; // No pitch bend
+                }
+                
+                // Clamp to maximum range
+                const clampedPercent = Math.max(-PITCH_BEND_MAX, Math.min(PITCH_BEND_MAX, offsetPercent));
+                
+                // Calculate effective percentage beyond dead zone
+                const effectivePercent = clampedPercent > 0 
+                    ? clampedPercent - PITCH_BEND_DEAD_ZONE 
+                    : clampedPercent + PITCH_BEND_DEAD_ZONE;
+                
+                // Convert to half-steps (0.5 half-steps per 10% beyond dead zone)
+                const halfSteps = effectivePercent * HALF_STEPS_PER_PERCENT;
+                
+                // Convert half-steps to frequency multiplier
+                // Each half-step multiplies frequency by 2^(1/12)
+                const multiplier = Math.pow(2, halfSteps / 12);
+                
+                return multiplier;
+            };
+            
+            // Handle movement for pitch bending
+            const handleMove = (e) => {
+                if (!isButtonPressed || !button.userData) return;
+                
+                e.preventDefault();
+                const yPosition = getYPosition(e);
+                const pitchBendMultiplier = calculatePitchBend(yPosition);
+                
+                // Update pitch in real-time
+                if (window.updatePitchBend) {
+                    window.updatePitchBend(button.userData.noteKey, pitchBendMultiplier);
+                }
+            };
+            
+            const handleStart = (e) => {
+                e.preventDefault();
+                if (isButtonPressed) return;
+                isButtonPressed = true;
+                
+                const noteIndex = parseInt(button.getAttribute('data-note-index'));
+                const noteKey = `mobile-${index}-${Date.now()}`;
+                
+                playNoteForButton(noteIndex, noteKey);
+                button.classList.add('active');
+                
+                // Apply mode color as background when active (darker version)
+                const modeColor = MODE_VISUALS[currentMode].rimColor;
+                const activeColor = '#' + modeColor.toString(16).padStart(6, '0');
+                button.style.background = activeColor;
+                button.style.borderRightColor = activeColor;
+                button.style.borderBottomColor = activeColor;
+                
+                button.userData = { noteKey, noteIndex };
+                
+                // Initialize pitch bend based on initial position
+                const yPosition = getYPosition(e);
+                const pitchBendMultiplier = calculatePitchBend(yPosition);
+                if (window.updatePitchBend) {
+                    window.updatePitchBend(noteKey, pitchBendMultiplier);
+                }
+            };
+            
+            const handleEnd = (e) => {
+                e.preventDefault();
+                if (!isButtonPressed) return;
+                isButtonPressed = false;
+                
+                if (button.userData) {
+                    // Reset pitch to original before stopping
+                    if (window.updatePitchBend) {
+                        window.updatePitchBend(button.userData.noteKey, 1.0);
+                    }
+                    
+                    stopNoteByKey(button.userData.noteKey);
+                    button.classList.remove('active');
+                    
+                    // Reset to mode-tinted color
+                    const modeTint = MODE_VISUALS[currentMode].tintColor;
+                    button.style.background = modeTint;
+                    button.style.borderRightColor = '#e8e6e3';
+                    button.style.borderBottomColor = '#e8e6e3';
+                    
+                    button.userData = null;
+                }
+            };
+            
+            // Support both touch and mouse events
+            button.addEventListener('touchstart', handleStart, { passive: false });
+            button.addEventListener('touchmove', handleMove, { passive: false });
+            button.addEventListener('touchend', handleEnd, { passive: false });
+            button.addEventListener('touchcancel', handleEnd, { passive: false });
+            button.addEventListener('mousedown', handleStart);
+            button.addEventListener('mousemove', handleMove);
+            button.addEventListener('mouseup', handleEnd);
+            button.addEventListener('mouseleave', handleEnd);
+            
+            mobileButtonsContainer.appendChild(button);
+            mobileButtons.push(button);
+            
+            // Store button reference by key for keyboard visual feedback
+            if (note.key) {
+                buttonByKey[note.key] = button;
+            }
+        });
+        
+        // Simple emoji indicator - show at mouse/finger position
+        document.addEventListener('mousedown', (e) => {
+            if (holdIndicator) {
+                holdIndicator.style.left = e.clientX + 'px';
+                holdIndicator.style.top = e.clientY + 'px';
+                holdIndicator.classList.add('visible');
+            }
+        });
+        
+        document.addEventListener('touchstart', (e) => {
+            if (holdIndicator && e.touches.length > 0) {
+                holdIndicator.style.left = e.touches[0].clientX + 'px';
+                holdIndicator.style.top = e.touches[0].clientY + 'px';
+                holdIndicator.classList.add('visible');
+            }
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (holdIndicator && holdIndicator.classList.contains('visible')) {
+                holdIndicator.style.left = e.clientX + 'px';
+                holdIndicator.style.top = e.clientY + 'px';
+            }
+        });
+        
+        document.addEventListener('touchmove', (e) => {
+            if (holdIndicator && holdIndicator.classList.contains('visible') && e.touches.length > 0) {
+                holdIndicator.style.left = e.touches[0].clientX + 'px';
+                holdIndicator.style.top = e.touches[0].clientY + 'px';
+            }
+        });
+        
+        document.addEventListener('mouseup', () => {
+            if (holdIndicator) {
+                holdIndicator.classList.remove('visible');
+            }
+        });
+        
+        document.addEventListener('touchend', () => {
+            if (holdIndicator) {
+                holdIndicator.classList.remove('visible');
+            }
+        });
+        
+        // Resume audio on any user interaction
+        document.addEventListener('click', resumeAudioContext, { once: true });
+        document.addEventListener('keydown', resumeAudioContext, { once: true });
+        document.addEventListener('touchstart', resumeAudioContext, { once: true });
+        
+        // Helper function to play note/chord for a button
+        function playNoteForButton(noteIndex, noteKey) {
+            if (currentMode === 0) {
+                // Note mode - play single note
+                const frequency = getNoteFrequency(noteIndex);
+                startNote(frequency, noteKey, noteIndex);
+            } else {
+                // Chord modes (1 = Diatonic, 2 = Jazz7, 3 = Jazz79)
+                let extensions = [];
+                if (currentMode === 2) {
+                    // Jazz7
+                    extensions = getJazz7Extensions(noteIndex);
+                } else if (currentMode === 3) {
+                    // Jazz79
+                    extensions = getJazz79Extensions(noteIndex);
+                }
+                // currentMode === 1 (Diatonic) uses empty extensions array
+                startChord(noteIndex, noteKey, extensions);
+            }
+        }
+        
+        // Attack phase: Start note/chord when key is pressed
+        document.addEventListener('keydown', (event) => {
+            const key = event.key.toLowerCase();
+            
+            // Prevent repeat triggers if key is already held
+            if (pressedKeys.has(key) || !keyMap[key]) {
+                return;
+            }
+            
+            pressedKeys.add(key);
+            
+            const noteIndex = MAJOR_SCALE_RATIOS.findIndex(n => n.key === key);
+            const noteKey = key;
+            
+            // Visual feedback: activate corresponding button
+            const button = buttonByKey[key];
+            if (button) {
+                button.classList.add('active');
+                // Apply mode color as background when active (darker version)
+                const modeColor = MODE_VISUALS[currentMode].rimColor;
+                const activeColor = '#' + modeColor.toString(16).padStart(6, '0');
+                button.style.background = activeColor;
+                button.style.borderRightColor = activeColor;
+                button.style.borderBottomColor = activeColor;
+            }
+            
+            playNoteForButton(noteIndex, noteKey);
+        });
+        
+        // Release phase: Stop note/chord when key is released
+        document.addEventListener('keyup', (event) => {
+            const key = event.key.toLowerCase();
+            
+            if (!keyMap[key]) {
+                return;
+            }
+            
+            pressedKeys.delete(key);
+            
+            // Visual feedback: deactivate corresponding button
+            const button = buttonByKey[key];
+            if (button) {
+                button.classList.remove('active');
+                
+                // Reset to mode-tinted color
+                const modeTint = MODE_VISUALS[currentMode].tintColor;
+                button.style.background = modeTint;
+                button.style.borderRightColor = '#e8e6e3';
+                button.style.borderBottomColor = '#e8e6e3';
+            }
+            
+            const noteKey = key;
+            stopNoteByKey(noteKey);
+        });
+        
+        // Stop all notes if window loses focus (prevents stuck notes)
+        window.addEventListener('blur', () => {
+            stopAllNotes();
+            pressedKeys.clear();
+            
+            // Reset all button states
+            document.querySelectorAll('.mobile-note-button').forEach(button => {
+                button.classList.remove('active');
+                
+                // Reset to mode-tinted color
+                const modeTint = MODE_VISUALS[currentMode].tintColor;
+                button.style.background = modeTint;
+                button.style.borderRightColor = '#e8e6e3';
+                button.style.borderBottomColor = '#e8e6e3';
+                button.userData = null;
+            });
+        });
+
+        // Info Modal Functionality
+        const infoModal = document.getElementById('info-modal');
+        const appTitleClick = document.getElementById('app-title-click');
+        const infoClose = document.getElementById('info-close');
+
+        // Open info modal when title is clicked
+        appTitleClick.addEventListener('click', () => {
+            infoModal.classList.add('active');
+        });
+
+        // Close info modal
+        infoClose.addEventListener('click', () => {
+            infoModal.classList.remove('active');
+        });
+
+        // Close modal when clicking outside
+        infoModal.addEventListener('click', (e) => {
+            if (e.target === infoModal) {
+                infoModal.classList.remove('active');
+            }
+        });
+
+        // Settings Modal Functionality
+        const settingsModal = document.getElementById('settings-modal');
+        const settingsButton = document.querySelector('.settings-button');
+        const settingsClose = document.getElementById('settings-close');
+        const volumeSlider = document.getElementById('volume-slider');
+        const volumeValue = document.getElementById('volume-value');
+        const pitchSlider = document.getElementById('pitch-slider');
+        const pitchValue = document.getElementById('pitch-value');
+        const reverbSlider = document.getElementById('reverb-slider');
+        const reverbValue = document.getElementById('reverb-value');
+
+        // Note names for pitch display (C3 to C5, 24 half steps)
+        const noteNames = [
+            'C3', 'C#3', 'D3', 'D#3', 'E3', 'F3', 'F#3', 'G3', 'G#3', 'A3', 'A#3', 'B3',
+            'C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4',
+            'C5'
+        ];
+
+        // Calculate frequency from half steps (C3 = 0, C4 = 12, C5 = 24)
+        // Using Equal Temperament for root, then Just Intonation ratios apply
+        function getFrequencyFromHalfSteps(halfSteps) {
+            // C3 = 130.81 Hz (C4 / 2)
+            const c3Freq = 130.81;
+            // Each half step multiplies by 2^(1/12)
+            return c3Freq * Math.pow(2, halfSteps / 12);
+        }
+
+        // Open settings modal
+        settingsButton.addEventListener('click', () => {
+            settingsModal.classList.add('active');
+        });
+
+        // Close settings modal
+        settingsClose.addEventListener('click', () => {
+            settingsModal.classList.remove('active');
+        });
+
+        // Close modal when clicking outside
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                settingsModal.classList.remove('active');
+            }
+        });
+
+        // Volume slider handler
+        volumeSlider.addEventListener('input', (e) => {
+            const volume = parseFloat(e.target.value);
+            const volumePercent = Math.round(volume * 100);
+            volumeValue.textContent = volumePercent + '%';
+            
+            // Update master gain (0 to 2 range, allowing up to 200% volume)
+            if (window.waterSynth && window.waterSynth.masterGain) {
+                window.waterSynth.masterGain.gain.value = volume;
+            }
+        });
+
+        // Pitch slider handler
+        pitchSlider.addEventListener('input', (e) => {
+            const halfSteps = parseInt(e.target.value);
+            const frequency = getFrequencyFromHalfSteps(halfSteps);
+            const noteName = noteNames[halfSteps];
+            
+            pitchValue.innerHTML = `<span class="pitch-note-name">${noteName}</span> (${frequency.toFixed(2)} Hz)`;
+            
+            // Update root frequency (this will affect all new notes)
+            if (typeof updateRootFrequency === 'function') {
+                updateRootFrequency(frequency);
+            }
+        });
+
+        // Reverb slider handler
+        reverbSlider.addEventListener('input', (e) => {
+            const reverbLength = parseFloat(e.target.value);
+            reverbValue.textContent = reverbLength.toFixed(1) + 's';
+            
+            // Update reverb length
+            if (window.waterSynth) {
+                window.waterSynth.reverbLength = reverbLength;
+                window.waterSynth.reverb.buffer = window.waterSynth.createImpulseResponse(reverbLength);
+            }
+        });
+
+        // Initialize volume display and sync with current masterGain
+        if (window.waterSynth && window.waterSynth.masterGain) {
+            const currentGain = window.waterSynth.masterGain.gain.value;
+            volumeSlider.value = currentGain;
+            volumeValue.textContent = Math.round(currentGain * 100) + '%';
+        } else {
+            const initialVolume = parseFloat(volumeSlider.value);
+            volumeValue.textContent = Math.round(initialVolume * 100) + '%';
+        }
+        
+        // Initialize pitch display
+        const initialHalfSteps = parseInt(pitchSlider.value);
+        const initialFreq = getFrequencyFromHalfSteps(initialHalfSteps);
+        pitchValue.innerHTML = `<span class="pitch-note-name">${noteNames[initialHalfSteps]}</span> (${initialFreq.toFixed(2)} Hz)`;
+        
+        // Make sure initial root frequency matches slider (C4 = 12 half steps from C3)
+        if (typeof updateRootFrequency === 'function') {
+            updateRootFrequency(initialFreq);
+        }
+        
+        // Initialize reverb display
+        const initialReverb = parseFloat(reverbSlider.value);
+        reverbValue.textContent = initialReverb.toFixed(1) + 's';
+
+        // Fastcontrol Navigation
+        let currentFastcontrol = 1;
+        const totalFastcontrols = 2;
+
+        function updateFastcontrolDisplay(direction = null) {
+            const allFastcontrols = document.querySelectorAll('.fastcontrol');
+            const currentElement = document.getElementById(`fastcontrol-${currentFastcontrol}`);
+            const previousElement = Array.from(allFastcontrols).find(fc => fc.classList.contains('active'));
+            
+            if (!currentElement) {
+                console.error(`Fastcontrol ${currentFastcontrol} not found`);
+                return;
+            }
+            
+            // Remove all active classes and animation classes
+            allFastcontrols.forEach(fc => {
+                fc.classList.remove('active', 'slide-out-left', 'slide-out-right', 'slide-in-left', 'slide-in-right');
+            });
+            
+            // Animate out the previous element
+            if (previousElement && previousElement !== currentElement && direction) {
+                if (direction === 'next') {
+                    previousElement.classList.add('slide-out-left');
+                } else if (direction === 'prev') {
+                    previousElement.classList.add('slide-out-right');
+                }
+            }
+            
+            // Check if we're leaving fastcontrol-2
+            const wasFastcontrol2 = previousElement && previousElement.id === 'fastcontrol-2';
+            const isLeavingFastcontrol2 = wasFastcontrol2 && currentFastcontrol !== 2;
+            
+            // Show and animate in the current element
+            setTimeout(() => {
+                if (direction === 'next') {
+                    currentElement.classList.add('slide-in-right', 'active');
+                } else if (direction === 'prev') {
+                    currentElement.classList.add('slide-in-left', 'active');
+                } else {
+                    currentElement.classList.add('active');
+                }
+                
+                // Auto-activate gate when visiting fastcontrol-2 panel
+                if (currentFastcontrol === 2) {
+                    const gateSlider = document.getElementById('gate-slider');
+                    const gateValue = document.getElementById('gate-value');
+                    if (gateSlider && gateValue) {
+                        gateSlider.value = 76;
+                        gateValue.textContent = '76%';
+                        if (typeof updateGateAmount === 'function') {
+                            updateGateAmount(76);
+                        }
+                    }
+                }
+                
+                // Auto-deactivate gate when leaving fastcontrol-2 panel
+                if (isLeavingFastcontrol2) {
+                    const gateSlider = document.getElementById('gate-slider');
+                    const gateValue = document.getElementById('gate-value');
+                    if (gateSlider && gateValue) {
+                        gateSlider.value = 0;
+                        gateValue.textContent = '0%';
+                        if (typeof updateGateAmount === 'function') {
+                            updateGateAmount(0);
+                        }
+                    }
+                }
+            }, direction ? 50 : 10);
+            
+            // Update navigation arrows
+            const prevArrow = document.getElementById('fastcontrol-prev');
+            const nextArrow = document.getElementById('fastcontrol-next');
+            
+            if (prevArrow && nextArrow) {
+                // Enable both arrows first
+                prevArrow.disabled = false;
+                nextArrow.disabled = false;
+                
+                // Disable prev arrow on first, next arrow on last
+                if (currentFastcontrol === 1) {
+                    prevArrow.disabled = true;
+                }
+                if (currentFastcontrol === totalFastcontrols) {
+                    nextArrow.disabled = true;
+                }
+            }
+        }
+
+        // Navigation arrow handlers
+        const prevArrow = document.getElementById('fastcontrol-prev');
+        const nextArrow = document.getElementById('fastcontrol-next');
+        
+        if (prevArrow) {
+            prevArrow.addEventListener('click', () => {
+                if (currentFastcontrol > 1) {
+                    currentFastcontrol--;
+                    updateFastcontrolDisplay('prev');
+                }
+            });
+        }
+        
+        if (nextArrow) {
+            nextArrow.addEventListener('click', () => {
+                if (currentFastcontrol < totalFastcontrols) {
+                    currentFastcontrol++;
+                    updateFastcontrolDisplay('next');
+                }
+            });
+        }
+
+        // Gate Slider (ducking amount)
+        const gateSlider = document.getElementById('gate-slider');
+        const gateValue = document.getElementById('gate-value');
+
+        gateSlider.addEventListener('input', (e) => {
+            const amount = parseInt(e.target.value);
+            gateValue.textContent = amount + '%';
+            
+            // Update gate amount (ducking effect)
+            if (typeof updateGateAmount === 'function') {
+                updateGateAmount(amount);
+            }
+        });
+
+        // Gate Speed Slider
+        const gateSpeedSlider = document.getElementById('gate-speed-slider');
+        const gateSpeedValue = document.getElementById('gate-speed-value');
+
+        gateSpeedSlider.addEventListener('input', (e) => {
+            const speed = parseFloat(e.target.value);
+            gateSpeedValue.textContent = speed.toFixed(2) + 's';
+            
+            // Update gate speed (cycle period)
+            if (typeof updateGateSpeed === 'function') {
+                updateGateSpeed(speed);
+            }
+        });
+
+        // Initialize gate display
+        const initialGateAmount = parseInt(gateSlider.value);
+        gateValue.textContent = initialGateAmount + '%';
+        if (typeof updateGateAmount === 'function') {
+            updateGateAmount(initialGateAmount);
+        }
+
+        // Initialize gate speed display
+        const initialGateSpeed = parseFloat(gateSpeedSlider.value);
+        gateSpeedValue.textContent = initialGateSpeed.toFixed(2) + 's';
+        if (typeof updateGateSpeed === 'function') {
+            updateGateSpeed(initialGateSpeed);
+        }
+
+        // Initialize fastcontrol display
+        updateFastcontrolDisplay();
+    </script>
+</body>
+</html>
