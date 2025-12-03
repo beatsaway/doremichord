@@ -38,16 +38,17 @@ class WaterSynth {
         // Compressor connects to destination (prevents clipping)
         this.compressor.connect(this.audioContext.destination);
         
-        this.masterGain.gain.value = 0.5;
+        this.masterGain.gain.value = 1.0;
 
         // Initialize reverb with shorter, lighter response
-        this.reverb.buffer = this.createImpulseResponse();
+        this.reverbLength = 1.0; // Default 1 second
+        this.reverb.buffer = this.createImpulseResponse(this.reverbLength);
     }
 
     // Generate synthetic impulse response for reverb (longer tail for more reverb)
-    createImpulseResponse() {
+    createImpulseResponse(lengthSeconds = 1.0) {
         const sampleRate = this.audioContext.sampleRate;
-        const length = sampleRate * 2.0; // 2-second impulse response (much longer tail)
+        const length = sampleRate * lengthSeconds; // Adjustable reverb length
         const buffer = this.audioContext.createBuffer(2, length, sampleRate);
 
         for (let channel = 0; channel < 2; channel++) {
