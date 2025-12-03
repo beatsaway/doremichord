@@ -10,6 +10,14 @@ class WaterSynth {
         this.reverbGain = this.audioContext.createGain();
         this.dryGain = this.audioContext.createGain();
         
+        // Add compressor/limiter to prevent clipping
+        this.compressor = this.audioContext.createDynamicsCompressor();
+        this.compressor.threshold.value = -12; // Start compressing at -12dB
+        this.compressor.knee.value = 6; // Smooth compression curve
+        this.compressor.ratio.value = 12; // High ratio for limiting effect
+        this.compressor.attack.value = 0.003; // Fast attack
+        this.compressor.release.value = 0.1; // Quick release
+        
         // Configure EQ for natural high-end rolloff
         this.globalEQ.type = 'lowpass';
         this.globalEQ.frequency.value = 15000; // Higher cutoff for clearer tones
@@ -17,15 +25,18 @@ class WaterSynth {
 
         // Connect dry path (main signal - clearer)
         this.masterGain.connect(this.dryGain);
-        this.dryGain.connect(this.audioContext.destination);
+        this.dryGain.connect(this.compressor);
         this.dryGain.gain.value = 0.3; // Less dry signal for more reverb
         
         // Connect wet path (reverb - very loud reverb)
         this.masterGain.connect(this.globalEQ);
         this.globalEQ.connect(this.reverb);
         this.reverb.connect(this.reverbGain);
-        this.reverbGain.connect(this.audioContext.destination);
+        this.reverbGain.connect(this.compressor);
         this.reverbGain.gain.value = 1.0; // Very loud reverb
+        
+        // Compressor connects to destination (prevents clipping)
+        this.compressor.connect(this.audioContext.destination);
         
         this.masterGain.gain.value = 0.5;
 
