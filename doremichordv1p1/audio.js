@@ -14,7 +14,7 @@
 //   Available extensions: 'seventh', 'minorSeventh', 'ninth', 'eleventh', 'thirteenth'
 //
 // Root frequency (can be changed, e.g., 432Hz, 440Hz, etc.)
-let ROOT_FREQUENCY = 523.25; // C5 - change to 432 for A4=432Hz tuning
+let ROOT_FREQUENCY = 261.63; // C4 - change to 432 for A4=432Hz tuning
 
 // Function to update root frequency (for settings)
 function updateRootFrequency(newFrequency) {
