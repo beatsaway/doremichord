@@ -9,11 +9,12 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #f5f5f5;
+            background: #2a2a2a;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -30,15 +31,31 @@
         h1 {
             font-size: 32px;
             font-weight: 400;
-            color: #000;
+            color: #ffffff;
             margin-bottom: 12px;
             letter-spacing: 2px;
             text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 4px;
+        }
+
+        h1:hover {
+            background: rgba(255, 255, 255, 0.05);
+            text-decoration: underline;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 4px;
+        }
+
+        h1:active {
+            background: rgba(255, 255, 255, 0.08);
         }
 
         .subtitle {
             font-size: 16px;
-            color: #666;
+            color: #b0b0b0;
             margin-bottom: 20px;
             letter-spacing: 0.5px;
         }
@@ -46,7 +63,7 @@
         .tagline {
             font-size: 16px;
             font-weight: 400;
-            color: #666;
+            color: #b0b0b0;
             margin-bottom: 48px;
             letter-spacing: 0.5px;
             line-height: 1.6;
@@ -60,61 +77,197 @@
         }
 
         .version-button {
-            background: #fff;
-            border: 1px solid #e0e0e0;
+            background: #2f2f2f;
+            border: 1px solid #3a3a3a;
             padding: 24px 32px;
             font-size: 18px;
-            font-weight: 500;
-            color: #000;
+            font-weight: 400;
+            color: #d0d0d0;
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.15s ease;
             text-decoration: none;
             display: block;
             letter-spacing: 0.5px;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .version-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 0;
         }
 
         .version-button:hover {
-            background: #fafafa;
-            border-color: #333;
-            transform: translateY(-2px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            background: #353535;
+            border-color: #4a4a4a;
+            color: #ffffff;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+        }
+
+        .version-button:hover::before {
+            opacity: 1;
         }
 
         .version-button:active {
-            transform: translateY(0);
+            transform: scale(0.97);
+        }
+
+        .version-button > * {
+            position: relative;
+            z-index: 1;
         }
 
         .version-label {
             font-size: 14px;
-            color: #999;
+            color: #909090;
             margin-top: 8px;
             font-weight: 400;
+        }
+
+        .version-button:first-child .version-label {
+            animation: pulse-label 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-label {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
         }
 
         .app-footer {
             font-size: 14px;
             font-weight: 400;
-            color: #999;
+            color: #909090;
             margin-top: 48px;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.2px;
+            line-height: 1.6;
         }
 
         .app-footer a {
-            color: #000;
-            text-decoration: none;
-            transition: opacity 0.2s ease;
+            color: #a0a0a0;
+            text-decoration: underline;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 2px;
+            transition: all 0.2s ease;
+            font-weight: 500;
         }
 
         .app-footer a:hover {
-            opacity: 0.5;
+            color: #ffffff;
+            text-decoration-thickness: 2px;
+        }
+
+        /* Info Modal */
+        .info-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+            backdrop-filter: blur(4px);
+        }
+
+        .info-modal.active {
+            display: flex;
+        }
+
+        .info-content {
+            background: #2f2f2f;
+            border-radius: 0;
+            padding: 32px 28px;
+            max-width: 360px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            position: relative;
+            border: 1px solid #3a3a3a;
+        }
+
+        .info-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+
+        .info-title {
+            font-size: 14px;
+            font-weight: 400;
+            color: #ffffff;
+            margin: 0;
+            letter-spacing: 0.3px;
+        }
+
+        .info-close {
+            background: rgba(58, 58, 58, 0.3);
+            border: 1px solid rgba(58, 58, 58, 0.5);
+            border-radius: 4px;
+            font-size: 18px;
+            color: #b0b0b0;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+            line-height: 1;
+        }
+
+        .info-close:hover {
+            color: #ffffff;
+            background: rgba(58, 58, 58, 0.6);
+            border-color: rgba(90, 90, 90, 0.8);
+        }
+
+        .info-body {
+            font-size: 12px;
+            font-weight: 400;
+            color: #d0d0d0;
+            line-height: 1.6;
+            letter-spacing: 0.2px;
+        }
+
+        .info-body p {
+            margin: 0 0 20px 0;
+        }
+
+        .info-body p:last-child {
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 480px) {
+            .info-content {
+                padding: 28px 24px;
+                max-width: calc(100% - 40px);
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>👁️Do Re Mi Chord👁️</h1>
-        <p class="tagline">easy music app at your finger tip💅</p>
-        <p class="subtitle">Select a version to continue</p>
+        <h1 id="app-title-click">Do Re Mi Chord</h1>
+        <p class="tagline">🎵music at your finger tip</p>
         
         <div class="version-buttons">
             <a href="doremichordv1p1/index.html" class="version-button">
@@ -133,6 +286,44 @@
             <a href="https://buymeacoffee.com/beatsaway" target="_blank">Support this developer</a>
         </div>
     </div>
+
+    <!-- Info Modal -->
+    <div id="info-modal" class="info-modal">
+        <div class="info-content">
+            <div class="info-header">
+                <h2 class="info-title">Did you know? (for most songs)</h2>
+                <button class="info-close" id="info-close">&times;</button>
+            </div>
+            <div class="info-body">
+                <p>If you can sing a song in solfa names, you will be able to play it by ear. If you can sing its bass line in solfa names, you will be able to play the bass line as accompaniment or even build chords with it by ear.</p>
+                <p>This instrument 'DoReMiChord' is designed exactly for that. Choose in ⚙️settings the right key of your song and see if you can play along!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Info Modal Functionality
+        const infoModal = document.getElementById('info-modal');
+        const appTitleClick = document.getElementById('app-title-click');
+        const infoClose = document.getElementById('info-close');
+
+        // Open info modal when title is clicked
+        appTitleClick.addEventListener('click', () => {
+            infoModal.classList.add('active');
+        });
+
+        // Close info modal
+        infoClose.addEventListener('click', () => {
+            infoModal.classList.remove('active');
+        });
+
+        // Close modal when clicking outside
+        infoModal.addEventListener('click', (e) => {
+            if (e.target === infoModal) {
+                infoModal.classList.remove('active');
+            }
+        });
+    </script>
 </body>
 </html>
 
