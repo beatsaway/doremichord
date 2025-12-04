@@ -1615,21 +1615,10 @@
                 // For touch events, verify this is the correct touch ending
                 if (e.changedTouches && e.changedTouches.length > 0 && button.userData) {
                     const endedTouchIdentifier = e.changedTouches[0].identifier;
-                    // Check if this touchend matches our stored touch identifier
-                    // Also check all changedTouches in case multiple touches end simultaneously
-                    let touchMatches = false;
-                    for (let i = 0; i < e.changedTouches.length; i++) {
-                        if (e.changedTouches[i].identifier === button.userData.touchIdentifier) {
-                            touchMatches = true;
-                            break;
-                        }
-                    }
-                    
-                    // If we have a stored touch identifier and it doesn't match, skip this touchend
-                    // BUT: if touchIdentifier is null/undefined (mouse event or touch lost), allow release
+                    // Only process if this is our touch ending
                     if (button.userData.touchIdentifier !== null && 
                         button.userData.touchIdentifier !== undefined &&
-                        !touchMatches) {
+                        endedTouchIdentifier !== button.userData.touchIdentifier) {
                         return; // This touchend is for a different touch
                     }
                 }
@@ -1680,15 +1669,14 @@
         
         // Helper function to update touch indicators
         function updateTouchIndicators(e) {
-            // Handle both touch events (e.touches) and mouse events
-            const touches = e.touches || [];
+            if (!e.touches) return;
             
             // Update emoji indicator for first touch
-            if (holdIndicator && touches.length > 0) {
-                holdIndicator.style.left = touches[0].clientX + 'px';
-                holdIndicator.style.top = touches[0].clientY + 'px';
+            if (holdIndicator && e.touches.length > 0) {
+                holdIndicator.style.left = e.touches[0].clientX + 'px';
+                holdIndicator.style.top = e.touches[0].clientY + 'px';
                 holdIndicator.classList.add('visible');
-            } else if (holdIndicator && touches.length === 0) {
+            } else if (holdIndicator && e.touches.length === 0) {
                 holdIndicator.classList.remove('visible');
             }
             
@@ -1696,8 +1684,8 @@
             const currentTouchIds = new Set();
             
             // Process all current touches
-            for (let i = 0; i < touches.length; i++) {
-                const touch = touches[i];
+            for (let i = 0; i < e.touches.length; i++) {
+                const touch = e.touches[i];
                 currentTouchIds.add(touch.identifier);
                 
                 // First touch uses emoji, skip it
@@ -1719,22 +1707,12 @@
             }
             
             // Remove indicators for touches that are no longer active
-            // Also check changedTouches for touches that just ended
-            const endedTouchIds = new Set();
-            if (e.changedTouches) {
-                for (let i = 0; i < e.changedTouches.length; i++) {
-                    // Skip first touch (emoji indicator)
-                    if (i === 0 && touches.length === 0) continue;
-                    endedTouchIds.add(e.changedTouches[i].identifier);
-                }
-            }
-            
             for (const [touchId, indicator] of activeTouchIndicators.entries()) {
-                if (!currentTouchIds.has(touchId) || endedTouchIds.has(touchId)) {
+                if (!currentTouchIds.has(touchId)) {
                     indicator.classList.remove('visible');
                     // Remove from DOM after transition
                     setTimeout(() => {
-                        if (indicator && indicator.parentNode) {
+                        if (indicator.parentNode) {
                             indicator.parentNode.removeChild(indicator);
                         }
                         activeTouchIndicators.delete(touchId);
@@ -1776,52 +1754,10 @@
         
         document.addEventListener('touchend', (e) => {
             updateTouchIndicators(e);
-            
-            // Fallback: If all touches are released, ensure all notes are stopped
-            // This handles edge cases where touch identifiers might get lost
-            if (e.touches.length === 0) {
-                // Check all buttons and release any that are still pressed
-                document.querySelectorAll('.mobile-note-button').forEach(btn => {
-                    if (btn.classList.contains('active') && btn.userData) {
-                        // Force release if button is still active but no touches remain
-                        const noteKey = btn.userData.noteKey;
-                        if (noteKey && window.stopNoteByKey) {
-                            window.stopNoteByKey(noteKey);
-                            btn.classList.remove('active');
-                            const modeTint = MODE_VISUALS[currentMode].tintColor;
-                            btn.style.background = modeTint;
-                            btn.style.borderRightColor = '#e8e6e3';
-                            btn.style.borderBottomColor = '#e8e6e3';
-                            btn.userData = null;
-                        }
-                    }
-                });
-            }
         });
         
         document.addEventListener('touchcancel', (e) => {
             updateTouchIndicators(e);
-            
-            // Fallback: If all touches are cancelled, ensure all notes are stopped
-            // This handles edge cases where touch identifiers might get lost
-            if (e.touches.length === 0) {
-                // Check all buttons and release any that are still pressed
-                document.querySelectorAll('.mobile-note-button').forEach(btn => {
-                    if (btn.classList.contains('active') && btn.userData) {
-                        // Force release if button is still active but no touches remain
-                        const noteKey = btn.userData.noteKey;
-                        if (noteKey && window.stopNoteByKey) {
-                            window.stopNoteByKey(noteKey);
-                            btn.classList.remove('active');
-                            const modeTint = MODE_VISUALS[currentMode].tintColor;
-                            btn.style.background = modeTint;
-                            btn.style.borderRightColor = '#e8e6e3';
-                            btn.style.borderBottomColor = '#e8e6e3';
-                            btn.userData = null;
-                        }
-                    }
-                });
-            }
         });
         
         // Resume audio on any user interaction
