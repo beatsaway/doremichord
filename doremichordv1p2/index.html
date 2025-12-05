@@ -1,0 +1,2308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <style>
+        * { box-sizing: border-box; }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            overflow-y: auto;
+            background: #000;
+            font-weight: 400;
+        }
+        
+        #top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            background: #2f2f2f;
+            border-bottom: 1px solid #3a3a3a;
+        }
+        
+        #top-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px;
+        }
+        
+        #menu-toggle {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            margin: 0;
+            background: #2f2f2f;
+            border: none;
+            color: #b0b0b0;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        
+        #menu-toggle:hover { 
+            background: #353535;
+            color: #fff;
+        }
+        
+        #menu-toggle:active {
+            transform: scale(0.98);
+        }
+        
+        #btn-settings {
+            height: 36px;
+            padding: 0 12px;
+            margin: 0;
+            background: #2f2f2f;
+            border: none;
+            color: #b0b0b0;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        
+        #btn-settings:hover { 
+            background: #353535;
+            color: #fff;
+        }
+        
+        #btn-settings:active {
+            transform: scale(0.98);
+        }
+        
+        #btn-app-name {
+            height: 36px;
+            padding: 0 12px;
+            margin: 0;
+            background: #2f2f2f;
+            border: none;
+            color: #b0b0b0;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        
+        #btn-app-name:hover { 
+            background: #353535;
+            color: #fff;
+        }
+        
+        #btn-app-name:active {
+            transform: scale(0.98);
+        }
+        
+        #buttons-row {
+            display: none;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        
+        #buttons-row.visible { display: flex; }
+        
+        .menu-button {
+            padding: 8px 12px;
+            background: #2f2f2f;
+            border: 1px solid #3a3a3a;
+            color: #b0b0b0;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+        }
+        
+        .menu-button:hover { 
+            background: #353535;
+            color: #fff;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+        }
+        
+        .menu-button:active { 
+            transform: scale(0.98);
+        }
+        
+        #emoji-row {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 8px;
+            border-top: 1px solid #3a3a3a;
+        }
+        
+        #emoji-row.visible { display: flex; }
+        
+        .emoji-button {
+            padding: 0;
+            background: transparent;
+            border: 2px solid #3a3a3a;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-radius: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            min-width: 60px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .emoji-button .color-swatch {
+            width: 100%;
+            height: 32px;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .emoji-button .color-swatch::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0);
+            transition: background 0.2s ease;
+        }
+        
+        .emoji-button:hover .color-swatch::after {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .emoji-button.selected .color-swatch::after {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .emoji-button .emoji-text {
+            font-size: 9px;
+            color: #808080;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 6px 4px;
+            text-align: center;
+            background: #2f2f2f;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .emoji-button:hover { 
+            border-color: #4a4a4a;
+        }
+        
+        .emoji-button:hover .emoji-text {
+            background: #353535;
+            color: #b0b0b0;
+        }
+        
+        .emoji-button:active {
+            transform: scale(0.98);
+        }
+        
+        .emoji-button.selected { 
+            border-color: #fff;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+        }
+        
+        .emoji-button.selected .emoji-text {
+            background: #2f2f2f;
+            color: #fff;
+        }
+        
+        /* Color palettes for each sound */
+        .emoji-button[data-emoji="🌋"] .color-swatch { background: #8B2635; } /* Kick - Deep burgundy */
+        .emoji-button[data-emoji="🤯"] .color-swatch { background: #D97757; } /* Snare - Warm orange */
+        .emoji-button[data-emoji="🪡"] .color-swatch { background: #E8B86D; } /* Pin/Hihat - Golden yellow */
+        .emoji-button[data-emoji="🖐"] .color-swatch { background: #4A9B8E; } /* Clap - Teal green */
+        .emoji-button[data-emoji="🫨"] .color-swatch { background: #5B8DB8; } /* Open Hat - Soft blue */
+        .emoji-button[data-emoji="🤏"] .color-swatch { background: #7B6B9B; } /* Closed Hat - Muted purple */
+        
+        .grid-box {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .grid-box .emoji-table {
+            width: 100%;
+            height: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        .grid-box .emoji-table tbody,
+        .grid-box .emoji-table tr {
+            margin: 0;
+            padding: 0;
+        }
+        
+        .grid-box {
+            font-size: min(8vw, 12vh);
+        }
+        
+        .grid-box .emoji-table td {
+            border: 0;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 40%;
+            line-height: 1;
+            padding: 0;
+            margin: 0;
+            width: 33.33%;
+            height: 50%;
+            overflow: hidden;
+            box-sizing: border-box;
+            display: table-cell;
+        }
+        
+        .grid-box .emoji-table td.disabled {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+        
+        @keyframes cellPlay {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.85); }
+            100% { transform: scale(1); }
+        }
+        
+        .grid-box.playing {
+            animation: cellPlay 0.15s ease-out;
+        }
+        
+        .grid-box.playing .emoji-table td {
+            animation: cellPlay 0.15s ease-out;
+        }
+        
+        .grid-box .emoji-table td * {
+            margin: 0;
+            padding: 0;
+            display: block;
+            width: 100%;
+            height: 100%;
+            line-height: 1;
+        }
+        
+        #grid-container {
+            display: none;
+            flex-direction: column;
+            gap: 0;
+            width: 90vw;
+            margin-top: 120px;
+            margin-bottom: calc(50vh + 20px);
+            padding: 10px;
+            position: relative;
+        }
+        
+        #grid-container.visible { 
+            display: flex;
+        }
+        
+        .bar-wrapper {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 8px;
+        }
+        
+        .bar-label {
+            width: 100%;
+            flex-shrink: 0;
+        }
+        
+        .bar-subsections-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+        
+        .bar-subsection {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0 3px;
+        }
+        
+        @media (min-width: 769px) {
+            .bar-subsections-container {
+                flex-direction: row;
+                gap: 10px;
+            }
+            
+            .bar-subsection {
+                flex: 1;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .grid-box .cell-emoji {
+                font-size: 28px;
+            }
+        }
+        
+        .grid-box {
+            aspect-ratio: 2 / 1;
+            background: #222;
+            border: 1px solid #3a3a3a;
+            position: relative;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+        }
+        
+        /* Different shades based on row position */
+        .grid-box.row-light {
+            background: #03002e; 
+        }
+        
+        .grid-box.row-dark {
+            background: #010038;  
+        }
+        
+        .grid-box.row-darkest {
+            background: #010047; 
+        }
+        
+        /* Green tones for H20Synth layer */
+        .grid-box.h2osynth.row-light {
+            background: #002e03; 
+        }
+        
+        .grid-box.h2osynth.row-dark {
+            background: #003801;  
+        }
+        
+        .grid-box.h2osynth.row-darkest {
+            background: #004701; 
+        }
+        
+        /* Layer dropdown */
+        #layer-dropdown-container {
+            position: relative;
+            display: inline-block;
+        }
+        
+        #layer-dropdown {
+            padding: 8px 12px;
+            background: #2f2f2f;
+            border: 1px solid #3a3a3a;
+            color: #b0b0b0;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: inherit;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+        }
+        
+        #layer-dropdown:hover { 
+            background: #353535;
+            color: #fff;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+        }
+        
+        #layer-dropdown:focus {
+            outline: none;
+            background: #353535;
+            color: #fff;
+        }
+        
+        #layer-dropdown option {
+            background: #2f2f2f;
+            color: #b0b0b0;
+        }
+        
+        .grid-box.break-after { 
+            border-bottom: 1px solid #3a3a3a;
+            margin-bottom: 8px;
+        }
+        
+        .grid-box.mid-break {
+            margin-bottom: 6px;
+        }
+        
+        .box-label {
+            position: absolute;
+            bottom: 2px;
+            right: 4px;
+            font-size: 10px;
+            color: #666;
+            font-weight: 400;
+            pointer-events: none;
+        }
+        
+        .bar-label {
+            width: 100%;
+            background: #2f2f2f;
+            border-bottom: 1px solid #3a3a3a;
+            padding: 10px 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #b0b0b0;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+        }
+        
+        .bar-play-button {
+            cursor: pointer;
+            user-select: none;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            color: #b0b0b0;
+            padding: 4px 8px;
+            background: #2f2f2f;
+            border: 1px solid #3a3a3a;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+        }
+        
+        .bar-play-button:hover {
+            background: #353535;
+            color: #fff;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+        }
+        
+        .bar-play-button:active {
+            transform: scale(0.98);
+        }
+        
+        #popup-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #popup-overlay.visible { display: flex; }
+        
+        #popup-modal {
+            background: #2f2f2f;
+            border: 1px solid #3a3a3a;
+            padding: 50px 50px 50px 50px;
+            min-width: 450px;
+            max-width: 90vw;
+            position: relative;
+            font-family: sans-serif;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02), 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+        
+        @media (max-width: 768px) {
+            #popup-modal {
+                padding: 40px 30px;
+                min-width: 85vw;
+                max-width: 85vw;
+            }
+        }
+        
+        #popup-close {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50px;
+            height: 50px;
+            padding: 0;
+            background: #2f2f2f;
+            color: #b0b0b0;
+            border: none;
+            border-left: 1px solid #3a3a3a;
+            border-bottom: 1px solid #3a3a3a;
+            font-size: 28px;
+            font-weight: 400;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+        }
+        
+        #popup-close:hover { 
+            background: #353535;
+            color: #fff;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+        }
+        
+        #popup-close:active {
+            transform: scale(0.98);
+        }
+        
+        #info-popup-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #info-popup-overlay.visible { display: flex; }
+        
+        #info-popup-modal {
+            background: #2f2f2f;
+            border: 1px solid #3a3a3a;
+            padding: 50px 50px 50px 50px;
+            min-width: 450px;
+            max-width: 90vw;
+            position: relative;
+            font-family: sans-serif;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02), 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+        
+        @media (max-width: 768px) {
+            #info-popup-modal {
+                padding: 40px 30px;
+                min-width: 85vw;
+                max-width: 85vw;
+            }
+        }
+        
+        #info-popup-close {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50px;
+            height: 50px;
+            padding: 0;
+            background: #2f2f2f;
+            color: #b0b0b0;
+            border: none;
+            border-left: 1px solid #3a3a3a;
+            border-bottom: 1px solid #3a3a3a;
+            font-size: 28px;
+            font-weight: 400;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+        }
+        
+        #info-popup-close:hover { 
+            background: #353535;
+            color: #fff;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+        }
+        
+        #info-popup-close:active {
+            transform: scale(0.98);
+        }
+        
+        #info-popup-content a {
+            transition: color 0.2s ease;
+        }
+        
+        #info-popup-content a:hover {
+            color: #fff !important;
+        }
+        
+        #popup-title {
+            margin: 0 0 40px 0;
+            font-size: 28px;
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        @media (max-width: 768px) {
+            #popup-title {
+                font-size: 24px;
+                margin-bottom: 30px;
+            }
+        }
+        
+        #bpm-label {
+            display: block;
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #b0b0b0;
+        }
+        
+        @media (max-width: 768px) {
+            #bpm-label {
+                font-size: 15px;
+                margin-bottom: 18px;
+            }
+        }
+        
+        #bpm-slider-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        #bpm-slider {
+            flex: 1;
+            height: 8px;
+            background: #3a3a3a;
+            border: none;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            border-radius: 4px;
+        }
+        
+        #bpm-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            background: #2f2f2f;
+            border: 2px solid #3a3a3a;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        #bpm-slider::-webkit-slider-thumb:hover {
+            background: #353535;
+            border-color: #b0b0b0;
+        }
+        
+        #bpm-slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            background: #2f2f2f;
+            border: 2px solid #3a3a3a;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        #bpm-slider::-moz-range-thumb:hover {
+            background: #353535;
+            border-color: #b0b0b0;
+        }
+        
+        #bpm-value {
+            min-width: 70px;
+            font-size: 36px;
+            font-weight: 600;
+            color: #fff;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        @media (max-width: 768px) {
+            #bpm-slider-container {
+                gap: 15px;
+            }
+            
+            #bpm-value {
+                min-width: 65px;
+                font-size: 32px;
+            }
+        }
+        
+        #key-control {
+            margin-top: 40px;
+        }
+        
+        @media (max-width: 768px) {
+            #key-control {
+                margin-top: 30px;
+            }
+        }
+        
+        #key-label {
+            display: block;
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #b0b0b0;
+        }
+        
+        @media (max-width: 768px) {
+            #key-label {
+                font-size: 15px;
+                margin-bottom: 18px;
+            }
+        }
+        
+        #key-slider-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        #key-slider {
+            flex: 1;
+            height: 8px;
+            background: #3a3a3a;
+            border: none;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            border-radius: 4px;
+        }
+        
+        #key-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            background: #2f2f2f;
+            border: 2px solid #3a3a3a;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        #key-slider::-webkit-slider-thumb:hover {
+            background: #353535;
+            border-color: #b0b0b0;
+        }
+        
+        #key-slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            background: #2f2f2f;
+            border: 2px solid #3a3a3a;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        #key-slider::-moz-range-thumb:hover {
+            background: #353535;
+            border-color: #b0b0b0;
+        }
+        
+        #key-value {
+            min-width: 70px;
+            font-size: 36px;
+            font-weight: 600;
+            color: #fff;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        @media (max-width: 768px) {
+            #key-slider-container {
+                gap: 15px;
+            }
+            
+            #key-value {
+                min-width: 65px;
+                font-size: 32px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .menu-button { padding: 5px 6px; }
+        }
+
+        /* Music Note Buttons */
+        #note-buttons {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 0;
+            padding: 0;
+            background: #2f2f2f;
+            z-index: 1500;
+            border-top: 1px solid #3a3a3a;
+            height: calc(90vh);
+            width: 100%;
+        }
+
+        .note-button {
+            border: none;
+            border-right: 1px solid #3a3a3a;
+            border-bottom: 1px solid #3a3a3a;
+            border-radius: 0;
+            background: #2f2f2f;
+            color: #b0b0b0;
+            font-size: 18px;
+            font-weight: 500;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+        }
+
+        .note-button:nth-child(4n) {
+            border-right: none;
+        }
+
+        .note-button:nth-child(n+13) {
+            border-bottom: none;
+        }
+
+        .note-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: currentColor;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            z-index: 0;
+        }
+
+        .note-button:hover {
+            background: #353535;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+        }
+
+        .note-button:active {
+            transform: scale(0.98);
+        }
+
+        .note-button.active {
+            color: #fff !important;
+            transform: scale(1);
+        }
+
+        .note-button.active::before {
+            opacity: 0.15;
+        }
+
+        .note-button .note-name {
+            font-size: 42px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            line-height: 1;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 1;
+            transition: transform 0.15s ease;
+            color: inherit;
+        }
+
+        .note-button.active .note-name {
+            color: #fff !important;
+        }
+
+        .note-button:active .note-name {
+            transform: scale(0.9);
+        }
+
+        .note-button.active .note-name {
+            transform: scale(1.05);
+        }
+
+        .note-button .note-key {
+            font-size: 11px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-weight: 500;
+            padding: 4px 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            position: relative;
+            z-index: 1;
+            color: #808080;
+            transition: all 0.15s ease;
+        }
+
+        .note-button.active .note-key {
+            background: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.95) !important;
+        }
+
+        @media (max-width: 768px) {
+            .note-button .note-name {
+                font-size: 36px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .note-button .note-name {
+                font-size: 32px;
+            }
+            
+            .note-button .note-key {
+                font-size: 10px;
+                padding: 3px 8px;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .note-button .note-name {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Top bar with hamburger and buttons -->
+    <div id="top-bar">
+        <div id="top-row">
+            <button id="menu-toggle" aria-label="Toggle menu">☰</button>
+            <button id="btn-app-name" aria-label="About Do Re Mi Chord">Do Re Mi Chord V1.2</button>
+            <button id="btn-settings" aria-label="Settings">⚙️settings</button>
+            <div id="buttons-row">
+                <div id="layer-dropdown-container">
+                    <select id="layer-dropdown">
+                        <option value="drum">Layer(Drum)</option>
+                        <option value="h2osynth">Layer(H20Synth)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div id="emoji-row">
+            <button class="emoji-button selected" data-emoji="🌋" id="emoji-kick" aria-label="Kick">
+                <div class="color-swatch"></div>
+                <span class="emoji-text">kick</span>
+            </button>
+            <button class="emoji-button" data-emoji="🤯" id="emoji-snare" aria-label="Snare">
+                <div class="color-swatch"></div>
+                <span class="emoji-text">snare</span>
+            </button>
+            <button class="emoji-button" data-emoji="🪡" id="emoji-hat" aria-label="Pin">
+                <div class="color-swatch"></div>
+                <span class="emoji-text">pin</span>
+            </button>
+            <button class="emoji-button" data-emoji="🖐" id="emoji-clap" aria-label="Clap">
+                <div class="color-swatch"></div>
+                <span class="emoji-text">clap</span>
+            </button>
+            <button class="emoji-button" data-emoji="🫨" id="emoji-openhat" aria-label="Open Hat">
+                <div class="color-swatch"></div>
+                <span class="emoji-text">open hat</span>
+            </button>
+            <button class="emoji-button" data-emoji="🤏" id="emoji-closedhat" aria-label="Closed Hat">
+                <div class="color-swatch"></div>
+                <span class="emoji-text">closed hat</span>
+            </button>
+        </div>
+    </div>
+    
+    <div id="grid-container">
+        <!-- 8x18 grid will be generated here -->
+    </div>
+
+    <!-- Music Note Buttons -->
+    <div id="note-buttons"></div>
+
+    <!-- About/Info Popup -->
+    <div id="info-popup-overlay">
+        <div id="info-popup-modal">
+            <button id="info-popup-close" aria-label="Close">✕</button>
+            <div id="info-popup-content">
+                <h2 style="margin-top: 0; margin-bottom: 20px; color: #b0b0b0; font-size: 20px; font-weight: 500;">Did you know? (for most songs)</h2>
+                <p style="color: #b0b0b0; line-height: 1.6; margin-bottom: 20px;">
+                    If you can sing a song in solfa names, you will be able to play it by ear. If you can sing its bass line in solfa names, you will be able to play the bass line as accompaniment or even build chords with it by ear.
+                </p>
+                <p style="color: #b0b0b0; line-height: 1.6; margin-bottom: 20px;">
+                    This instrument 'DoReMiChord' is designed exactly for that. Choose in ⚙️settings the right key of your song and see if you can play along!
+                </p>
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #3a3a3a;">
+                    <p style="color: #b0b0b0; line-height: 1.6; margin-bottom: 10px;">
+                        Developed by <a href="https://youtube.com/beatsaway" target="_blank" style="color: #fff; text-decoration: underline;">BeatsAway</a>
+                    </p>
+                    <p style="color: #b0b0b0; line-height: 1.6; margin-bottom: 0;">
+                        <a href="https://buymeacoffee.com/beatsaway" target="_blank" style="color: #fff; text-decoration: underline;">Support this developer</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Popup - Dutch Modernism style -->
+    <div id="popup-overlay">
+        <div id="popup-modal">
+            <button id="popup-close" aria-label="Close">✕</button>
+            <div id="bpm-control">
+                <label id="bpm-label" for="bpm-slider">BPM</label>
+                <div id="bpm-slider-container">
+                    <input type="range" id="bpm-slider" min="60" max="200" value="120" step="1">
+                    <span id="bpm-value">120</span>
+                </div>
+            </div>
+            <div id="key-control">
+                <label id="key-label" for="key-slider">Key</label>
+                <div id="key-slider-container">
+                    <input type="range" id="key-slider" min="0" max="24" value="12" step="1">
+                    <span id="key-value">C4</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sound files -->
+    <script src="ss_kick.js"></script>
+    <script src="ss_snare.js"></script>
+    <script src="ss_pin.js"></script>
+    <script src="ss_clap.js"></script>
+    <script src="ss_hihat.js"></script>
+    <script src="soundManager.js"></script>
+    <script src="ss_watersynth.js"></script>
+    <script src="musicSoundManager.js"></script>
+    <script src="brostepGrowlBass.js"></script>
+
+    <script>
+        const gridContainer = document.getElementById('grid-container');
+        const colsPerRow = 4;
+        const rowsPerBar = 6;
+        
+        // Generate 192 boxes (8 bars of 24 cells each)
+        let currentBarWrapper = null;
+        let currentSubsection1 = null;
+        let currentSubsection2 = null;
+        
+        for (let i = 0; i < 192; i++) {
+            const positionInBar = i % 24;
+            const barNumber = Math.floor(i / 24) + 1;
+            
+            // Create bar wrapper and subsections at the start of each bar
+            if (positionInBar === 0) {
+                // Create bar wrapper
+                currentBarWrapper = document.createElement('div');
+                currentBarWrapper.className = 'bar-wrapper';
+                
+                // Create bar label
+                const barLabel = document.createElement('div');
+                barLabel.className = 'bar-label';
+                barLabel.dataset.barNumber = barNumber;
+                
+                const barText = document.createElement('span');
+                barText.textContent = `#${barNumber}`;
+                
+                const playButton = document.createElement('span');
+                playButton.className = 'bar-play-button';
+                playButton.textContent = '▶︎';
+                playButton.dataset.barNumber = barNumber;
+                
+                barLabel.appendChild(barText);
+                barLabel.appendChild(playButton);
+                currentBarWrapper.appendChild(barLabel);
+                
+                // Create container for subsections
+                const subsectionsContainer = document.createElement('div');
+                subsectionsContainer.className = 'bar-subsections-container';
+                
+                // Create two subsections
+                currentSubsection1 = document.createElement('div');
+                currentSubsection1.className = 'bar-subsection';
+                
+                currentSubsection2 = document.createElement('div');
+                currentSubsection2.className = 'bar-subsection';
+                
+                subsectionsContainer.appendChild(currentSubsection1);
+                subsectionsContainer.appendChild(currentSubsection2);
+                
+                currentBarWrapper.appendChild(subsectionsContainer);
+                
+                gridContainer.appendChild(currentBarWrapper);
+            }
+            
+            const box = document.createElement('div');
+            box.className = 'grid-box';
+            
+            // Calculate label: Pattern for each bar of 24 cells
+            // Row 1: 1,2,3,4 | Row 2: 1an,2an,3an,4an | Row 3: 1and,2and,3and,4and
+            // Row 4: 5,6,7,8 | Row 5: 5an,6an,7an,8an | Row 6: 5and,6and,7and,8and
+            const rowInBar = Math.floor(positionInBar / 4); // 0-5 (6 rows)
+            
+            // Add grey shade class based on row position
+            // Pattern repeats: light (0,3), dark (1,4), darkest (2,5)
+            const shadePattern = rowInBar % 3;
+            if (shadePattern === 0) {
+                box.classList.add('row-darkest');
+            } else if (shadePattern === 1) {
+                box.classList.add('row-dark');
+            } else {
+                box.classList.add('row-light');
+            }
+            
+            // Break after row 3 (between 1-4 and 5-8 sections)
+            if (rowInBar === 2) {
+                box.classList.add('mid-break');
+            }
+            
+            // Break after each bar (every 6 rows = 24 cells)
+            const rowNumber = Math.floor(i / colsPerRow);
+            if ((rowNumber % rowsPerBar === rowsPerBar - 1) && rowNumber < 48) {
+                box.classList.add('break-after');
+            }
+            const column = positionInBar % 4; // 0-3 (4 columns)
+            
+            let baseNumber, suffix;
+            if (rowInBar < 3) {
+                // First 3 rows: 1-4
+                baseNumber = column + 1;
+                suffix = rowInBar === 0 ? '' : rowInBar === 1 ? 'an' : 'and';
+            } else {
+                // Next 3 rows: 5-8
+                baseNumber = column + 5;
+                suffix = rowInBar === 3 ? '' : rowInBar === 4 ? 'an' : 'and';
+            }
+            
+            // Create 2x3 table for emojis (but only first 4 cells are usable)
+            const emojiTable = document.createElement('table');
+            emojiTable.className = 'emoji-table';
+            const tbody = document.createElement('tbody');
+            for (let r = 0; r < 2; r++) {
+                const row = document.createElement('tr');
+                for (let c = 0; c < 3; c++) {
+                    const cell = document.createElement('td');
+                    const position = (r * 3 + c);
+                    cell.dataset.position = position.toString();
+                    // First 6 cells (all 3 columns) are usable for emojis
+                    // No cells are disabled now
+                    row.appendChild(cell);
+                }
+                tbody.appendChild(row);
+            }
+            emojiTable.appendChild(tbody);
+            box.appendChild(emojiTable);
+            
+            const label = document.createElement('span');
+            label.className = 'box-label';
+            label.textContent = baseNumber + suffix;
+            box.appendChild(label);
+            
+            // Add box to appropriate subsection
+            // First subsection: positions 0-11 (rows 0-2)
+            // Second subsection: positions 12-23 (rows 3-5)
+            if (positionInBar < 12) {
+                currentSubsection1.appendChild(box);
+            } else {
+                currentSubsection2.appendChild(box);
+            }
+        }
+        
+        // Selected emoji state (default to kick)
+        let selectedEmoji = '🌋';
+        
+        // Current layer state
+        let currentLayer = 'drum'; // 'drum' or 'h2osynth'
+        
+        // Layerdrum data storage: layerdrumData[barNumber][cellIndex] = array of emojis
+        // Structure: { 1: [['🌋'], [], ['🤯'], ...], 2: [...], ... }
+        // Each bar has 24 cells (0-23), each cell contains an array of emojis
+        const layerdrumData = {};
+        
+        // H20Synth data storage: h2osynthData[barNumber][cellIndex] = array of notes/values
+        // Structure: { 1: [[], [], [...], ...], 2: [...], ... }
+        // Each bar has 24 cells (0-23), each cell contains an array of notes/values
+        const h2osynthData = {};
+        
+        // Initialize layerdrum data for all 8 bars (24 cells each)
+        for (let barNum = 1; barNum <= 8; barNum++) {
+            layerdrumData[barNum] = [];
+            h2osynthData[barNum] = [];
+            for (let cellIndex = 0; cellIndex < 24; cellIndex++) {
+                layerdrumData[barNum][cellIndex] = [];
+                h2osynthData[barNum][cellIndex] = [];
+            }
+        }
+        
+        // Emoji position mapping: each emoji has a fixed position
+        const emojiPositions = {
+            '🌋': 0, // Kick - first position
+            '🤯': 1, // Snare - second position
+            '🪡': 2, // Pin - third position
+            '🖐': 3, // Clap - fourth position
+            '🫨': 4, // Open Hat - fifth position
+            '🤏': 5  // Closed Hat - sixth position
+        };
+        
+        // Emoji to color mapping
+        const emojiColors = {
+            '🌋': '#8B2635', // Kick - Deep burgundy
+            '🤯': '#D97757', // Snare - Warm orange
+            '🪡': '#E8B86D', // Pin/Hihat - Golden yellow
+            '🖐': '#4A9B8E', // Clap - Teal green
+            '🫨': '#5B8DB8', // Open Hat - Soft blue
+            '🤏': '#7B6B9B'  // Closed Hat - Muted purple
+        };
+        
+        // Helper function to get bar number and cell index from a grid-box element
+        function getCellInfo(gridBox) {
+            const allBoxes = Array.from(gridContainer.querySelectorAll('.grid-box'));
+            const globalIndex = allBoxes.indexOf(gridBox);
+            const barNumber = Math.floor(globalIndex / 24) + 1;
+            const cellIndex = globalIndex % 24;
+            return { barNumber, cellIndex };
+        }
+        
+        // Helper function to update DOM display from layerdrum data
+        function updateCellDisplay(gridBox, emojis) {
+            const table = gridBox.querySelector('.emoji-table');
+            if (!table) return;
+            
+            const cells = table.querySelectorAll('td:not(.disabled)');
+            
+            // Clear all cells first (remove both text and background color)
+            cells.forEach(td => {
+                td.textContent = '';
+                td.style.backgroundColor = '';
+            });
+            
+            // Fill cells with colors in their designated positions
+            emojis.forEach(emoji => {
+                const position = getEmojiPosition(emoji);
+                if (position >= 0 && position < cells.length) {
+                    const color = emojiColors[emoji] || '#2f2f2f';
+                    cells[position].style.backgroundColor = color;
+                }
+            });
+        }
+        
+        // Helper function to get emojis from layerdrum data for a cell
+        function getCellEmojis(barNumber, cellIndex) {
+            if (layerdrumData[barNumber] && layerdrumData[barNumber][cellIndex]) {
+                return layerdrumData[barNumber][cellIndex];
+            }
+            return [];
+        }
+        
+        // Helper function to get H20Synth data for a cell
+        function getCellH2OSynth(barNumber, cellIndex) {
+            if (h2osynthData[barNumber] && h2osynthData[barNumber][cellIndex]) {
+                return h2osynthData[barNumber][cellIndex];
+            }
+            return [];
+        }
+        
+        // Function to switch layers and update UI
+        function switchLayer(newLayer) {
+            currentLayer = newLayer;
+            const allBoxes = Array.from(gridContainer.querySelectorAll('.grid-box'));
+            
+            // Show/hide emoji row based on layer AND menu visibility
+            // Only show emoji row if menu is open AND layer is drum
+            const isMenuVisible = gridContainer.classList.contains('visible');
+            if (newLayer === 'drum' && isMenuVisible) {
+                emojiRow.classList.add('visible');
+            } else {
+                emojiRow.classList.remove('visible');
+            }
+            
+            allBoxes.forEach(box => {
+                const { barNumber, cellIndex } = getCellInfo(box);
+                
+                // Update background color based on layer
+                if (newLayer === 'h2osynth') {
+                    box.classList.add('h2osynth');
+                } else {
+                    box.classList.remove('h2osynth');
+                }
+                
+                // Update display based on current layer
+                if (newLayer === 'drum') {
+                    // Show emojis from layerdrum data
+                    const emojis = getCellEmojis(barNumber, cellIndex);
+                    updateCellDisplay(box, emojis);
+                } else {
+                    // H20Synth layer: hide emojis (clear display)
+                    const table = box.querySelector('.emoji-table');
+                    if (table) {
+                        const cells = table.querySelectorAll('td:not(.disabled)');
+                        cells.forEach(td => {
+                            td.textContent = '';
+                            td.style.backgroundColor = '';
+                        });
+                    }
+                    // TODO: Display H20Synth data when implemented
+                }
+            });
+        }
+        
+        // Function to update all cells display for current layer
+        function refreshAllCellsDisplay() {
+            const allBoxes = Array.from(gridContainer.querySelectorAll('.grid-box'));
+            allBoxes.forEach(box => {
+                const { barNumber, cellIndex } = getCellInfo(box);
+                if (currentLayer === 'drum') {
+                    const emojis = getCellEmojis(barNumber, cellIndex);
+                    updateCellDisplay(box, emojis);
+                } else {
+                    // H20Synth: clear emojis
+                    const table = box.querySelector('.emoji-table');
+                    if (table) {
+                        const cells = table.querySelectorAll('td:not(.disabled)');
+                        cells.forEach(td => {
+                            td.textContent = '';
+                            td.style.backgroundColor = '';
+                        });
+                    }
+                }
+            });
+        }
+        
+        // Helper function to get emoji position
+        function getEmojiPosition(emoji) {
+            // Handle emoji variations (some emojis have invisible characters)
+            if (emoji.includes('🌋')) return 0;
+            if (emoji.includes('🤯')) return 1;
+            if (emoji.includes('🪡')) return 2;
+            if (emoji.includes('🖐')) return 3;
+            if (emoji.includes('🫨')) return 4;
+            if (emoji.includes('🤏')) return 5;
+            return emojiPositions[emoji] !== undefined ? emojiPositions[emoji] : -1;
+        }
+        
+        // Toggle buttons and grid visibility with hamburger menu
+        const menuToggle = document.getElementById('menu-toggle');
+        const buttonsRow = document.getElementById('buttons-row');
+        const emojiRow = document.getElementById('emoji-row');
+        const noteButtonsPanel = document.getElementById('note-buttons');
+        
+        menuToggle.addEventListener('click', () => {
+            const isVisible = gridContainer.classList.toggle('visible');
+            buttonsRow.classList.toggle('visible', isVisible);
+            
+            // Hide Settings button and app name when menu is open, show when menu is closed
+            const settingsButton = document.getElementById('btn-settings');
+            const appNameButton = document.getElementById('btn-app-name');
+            if (isVisible) {
+                settingsButton.style.display = 'none';
+                appNameButton.style.display = 'none';
+            } else {
+                settingsButton.style.display = 'flex';
+                appNameButton.style.display = 'flex';
+            }
+            
+            // Hide note buttons panel when menu is open, show when menu is closed
+            if (isVisible) {
+                noteButtonsPanel.style.display = 'none';
+            } else {
+                noteButtonsPanel.style.display = 'grid';
+            }
+            
+            // Only show emoji row if menu is visible AND current layer is drum
+            if (isVisible && currentLayer === 'drum') {
+                emojiRow.classList.add('visible');
+            } else {
+                emojiRow.classList.remove('visible');
+            }
+            
+            // Change symbol to indicate toggle state
+            if (isVisible) {
+                menuToggle.textContent = '✕'; // Close symbol when visible
+            } else {
+                menuToggle.textContent = '☰'; // Hamburger when hidden
+            }
+        });
+        
+        // Emoji selection handlers
+        document.querySelectorAll('.emoji-button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.emoji-button').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedEmoji = btn.dataset.emoji;
+                
+                // Play sound when emoji button is clicked
+                if (window.soundManager) {
+                    try {
+                        window.soundManager.playSound(selectedEmoji);
+                    } catch (error) {
+                        console.error('Error playing sound:', error);
+                    }
+                } else {
+                    console.warn('SoundManager not available');
+                }
+            });
+        });
+        
+        // Layer dropdown handler
+        const layerDropdown = document.getElementById('layer-dropdown');
+        layerDropdown.addEventListener('change', (e) => {
+            const newLayer = e.target.value;
+            switchLayer(newLayer);
+        });
+        
+        // Cell click handler to add/replace emoji (for drum layer) or edit H20Synth
+        gridContainer.addEventListener('click', (e) => {
+            const cell = e.target.closest('.grid-box');
+            if (!cell || e.target.classList.contains('box-label')) return;
+            
+            // Get bar number and cell index
+            const { barNumber, cellIndex } = getCellInfo(cell);
+            
+            if (currentLayer === 'drum') {
+                // Drum layer: handle emoji placement
+                const currentEmojis = getCellEmojis(barNumber, cellIndex);
+                const emojiIndex = currentEmojis.indexOf(selectedEmoji);
+                
+                if (emojiIndex >= 0) {
+                    // Toggle off: remove the emoji if it's already there
+                    currentEmojis.splice(emojiIndex, 1);
+                } else {
+                    // Toggle on: add the emoji to the data array
+                    currentEmojis.push(selectedEmoji);
+                    
+                    // Play sound when emoji is added to cell
+                    if (window.soundManager) {
+                        try {
+                            window.soundManager.playSound(selectedEmoji);
+                        } catch (error) {
+                            console.error('Error playing sound:', error);
+                        }
+                    }
+                }
+                
+                // Update the data array
+                layerdrumData[barNumber][cellIndex] = currentEmojis;
+                
+                // Update DOM display from data array
+                updateCellDisplay(cell, currentEmojis);
+            } else {
+                // H20Synth layer: TODO - handle H20Synth editing
+                // For now, just placeholder
+                console.log('H20Synth layer clicked at bar', barNumber, 'cell', cellIndex);
+            }
+        });
+        
+        // Settings popup functionality
+        const settingsButton = document.getElementById('btn-settings');
+        const popupOverlay = document.getElementById('popup-overlay');
+        const popupClose = document.getElementById('popup-close');
+        const bpmSlider = document.getElementById('bpm-slider');
+        const bpmValue = document.getElementById('bpm-value');
+        const keySlider = document.getElementById('key-slider');
+        const keyValue = document.getElementById('key-value');
+        
+        // Key slider functionality
+        // Semitone offset from C3: 0 = C3, 1 = C#3, ..., 12 = C4, ..., 24 = C5
+        function getKeyName(semitoneOffset) {
+            const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+            const octave = 3 + Math.floor(semitoneOffset / 12);
+            const noteIndex = semitoneOffset % 12;
+            return `${noteNames[noteIndex]}${octave}`;
+        }
+        
+        function getKeyFrequency(semitoneOffset) {
+            // C3 = 130.81 Hz, C4 = 261.63 Hz, C5 = 523.25 Hz
+            // Formula: frequency = 130.81 * 2^(semitoneOffset/12)
+            return 130.81 * Math.pow(2, semitoneOffset / 12);
+        }
+        
+        // Store current key frequency for future use
+        let currentKeyFrequency = getKeyFrequency(12); // Default C4
+        
+        // Update key value display
+        keySlider.addEventListener('input', (e) => {
+            const semitoneOffset = parseInt(e.target.value);
+            const keyName = getKeyName(semitoneOffset);
+            const frequency = getKeyFrequency(semitoneOffset);
+            keyValue.textContent = keyName;
+            currentKeyFrequency = frequency;
+            // Store in a way that can be accessed later if needed
+            window.currentKeyFrequency = currentKeyFrequency;
+            window.currentKeyName = keyName;
+            
+            // Update music sound manager root frequency
+            if (window.musicSoundManager && window.musicSoundManager.updateRootFrequency) {
+                window.musicSoundManager.updateRootFrequency(frequency);
+            }
+        });
+        
+        // Initialize key value
+        const initialSemitone = parseInt(keySlider.value);
+        keyValue.textContent = getKeyName(initialSemitone);
+        currentKeyFrequency = getKeyFrequency(initialSemitone);
+        window.currentKeyFrequency = currentKeyFrequency;
+        window.currentKeyName = getKeyName(initialSemitone);
+        
+        // Initialize music sound manager with initial frequency
+        if (window.musicSoundManager && window.musicSoundManager.updateRootFrequency) {
+            window.musicSoundManager.updateRootFrequency(currentKeyFrequency);
+        }
+        
+        // Open settings popup
+        settingsButton.addEventListener('click', () => {
+            popupOverlay.classList.add('visible');
+        });
+        
+        // Close settings popup
+        popupClose.addEventListener('click', () => {
+            popupOverlay.classList.remove('visible');
+        });
+        
+        // Info popup functionality
+        const appNameButton = document.getElementById('btn-app-name');
+        const infoPopupOverlay = document.getElementById('info-popup-overlay');
+        const infoPopupClose = document.getElementById('info-popup-close');
+        
+        // Open info popup
+        appNameButton.addEventListener('click', () => {
+            infoPopupOverlay.classList.add('visible');
+        });
+        
+        // Close info popup
+        infoPopupClose.addEventListener('click', () => {
+            infoPopupOverlay.classList.remove('visible');
+        });
+        
+        // Close info popup when clicking overlay
+        infoPopupOverlay.addEventListener('click', (e) => {
+            if (e.target === infoPopupOverlay) {
+                infoPopupOverlay.classList.remove('visible');
+            }
+        });
+        
+        // Close popup when clicking overlay
+        popupOverlay.addEventListener('click', (e) => {
+            if (e.target === popupOverlay) {
+                popupOverlay.classList.remove('visible');
+            }
+        });
+        
+        // Update BPM value display
+        bpmSlider.addEventListener('input', (e) => {
+            bpmValue.textContent = e.target.value;
+        });
+        
+        // Initialize BPM value
+        bpmValue.textContent = bpmSlider.value;
+        
+        // Playback functionality
+        let playbackTimers = {}; // Store timers for each bar
+        let activeBars = new Set(); // Track which bars are currently playing
+        let combinedPlaybackTimer = null; // Timer for combined playback
+        let combinedPlaybackActive = false; // Flag for combined playback state
+        
+        function getBPM() {
+            return parseInt(bpmSlider.value) || 120;
+        }
+        
+        function getCellDuration() {
+            const bpm = getBPM();
+            return (60 / bpm / 6); // Duration in seconds
+        }
+        
+        function getCellsInBarOrder(barNumber) {
+            // Get all grid boxes for this bar (24 cells)
+            const allBoxes = Array.from(gridContainer.querySelectorAll('.grid-box'));
+            const barStartIndex = (barNumber - 1) * 24;
+            const barBoxes = allBoxes.slice(barStartIndex, barStartIndex + 24);
+            
+            // Order: 1, 1an, 1and, 2, 2an, 2and, 3, 3an, 3and, 4, 4an, 4and,
+            //        5, 5an, 5and, 6, 6an, 6and, 7, 7an, 7and, 8, 8an, 8and
+            // Row 0 (positions 0-3): 1, 2, 3, 4
+            // Row 1 (positions 4-7): 1an, 2an, 3an, 4an
+            // Row 2 (positions 8-11): 1and, 2and, 3and, 4and
+            // Row 3 (positions 12-15): 5, 6, 7, 8
+            // Row 4 (positions 16-19): 5an, 6an, 7an, 8an
+            // Row 5 (positions 20-23): 5and, 6and, 7and, 8and
+            const orderedCells = [];
+            for (let beat = 1; beat <= 8; beat++) {
+                let basePos, anPos, andPos;
+                
+                if (beat <= 4) {
+                    // Beats 1-4: row 0, 1, 2
+                    basePos = beat - 1;           // Row 0: 0,1,2,3
+                    anPos = (beat - 1) + 4;      // Row 1: 4,5,6,7
+                    andPos = (beat - 1) + 8;     // Row 2: 8,9,10,11
+                } else {
+                    // Beats 5-8: row 3, 4, 5
+                    basePos = (beat - 5) + 12;   // Row 3: 12,13,14,15
+                    anPos = (beat - 5) + 16;     // Row 4: 16,17,18,19
+                    andPos = (beat - 5) + 20;    // Row 5: 20,21,22,23
+                }
+                
+                orderedCells.push(barBoxes[basePos]);
+                orderedCells.push(barBoxes[anPos]);
+                orderedCells.push(barBoxes[andPos]);
+            }
+            
+            return orderedCells;
+        }
+        
+        function stopAllPlayback() {
+            // Stop all individual bar playback
+            Object.keys(playbackTimers).forEach(barNum => {
+                const barNumber = parseInt(barNum);
+                if (typeof playbackTimers[barNumber] === 'number') {
+                    clearTimeout(playbackTimers[barNumber]);
+                }
+                delete playbackTimers[barNumber];
+            });
+            
+            // Stop combined playback
+            if (combinedPlaybackTimer) {
+                clearTimeout(combinedPlaybackTimer);
+                combinedPlaybackTimer = null;
+            }
+            combinedPlaybackActive = false;
+        }
+        
+        function playCombinedLoop() {
+            stopAllPlayback();
+            
+            if (activeBars.size === 0) {
+                combinedPlaybackActive = false;
+                return;
+            }
+            
+            combinedPlaybackActive = true;
+            
+            // Get bars in ascending order (smallest to largest)
+            const sortedBars = Array.from(activeBars).sort((a, b) => a - b);
+            
+            // Combine all cells from all active bars in order
+            const allCells = [];
+            sortedBars.forEach(barNumber => {
+                const barCells = getCellsInBarOrder(barNumber);
+                allCells.push(...barCells);
+            });
+            
+            const cellDuration = getCellDuration();
+            let currentIndex = 0;
+            
+            function playNextCell() {
+                // Check if combined playback should continue
+                if (!combinedPlaybackActive || activeBars.size === 0) {
+                    combinedPlaybackActive = false;
+                    return;
+                }
+                
+                // If bars changed, restart with new combination
+                const currentSortedBars = Array.from(activeBars).sort((a, b) => a - b);
+                const currentBarsStr = currentSortedBars.join(',');
+                const originalBarsStr = sortedBars.join(',');
+                
+                if (currentBarsStr !== originalBarsStr) {
+                    // Bars changed, restart combined playback
+                    playCombinedLoop();
+                    return;
+                }
+                
+                // Reset to beginning if we've reached the end (loop)
+                if (currentIndex >= allCells.length) {
+                    currentIndex = 0;
+                }
+                
+                const cell = allCells[currentIndex];
+                
+                // Add animation class for visual feedback
+                cell.classList.add('playing');
+                setTimeout(() => {
+                    cell.classList.remove('playing');
+                }, 150); // Remove after animation completes
+                
+                // Get data from both layers
+                const { barNumber, cellIndex } = getCellInfo(cell);
+                
+                // Play drum layer
+                const emojis = getCellEmojis(barNumber, cellIndex);
+                if (window.soundManager && emojis.length > 0) {
+                    emojis.forEach(emoji => {
+                        try {
+                            window.soundManager.playSound(emoji);
+                        } catch (error) {
+                            console.error('Error playing sound:', error);
+                        }
+                    });
+                }
+                
+                // Play H20Synth layer (TODO: implement H20Synth playback)
+                const h2osynthCellData = getCellH2OSynth(barNumber, cellIndex);
+                if (h2osynthCellData.length > 0) {
+                    // TODO: Play H20Synth sounds
+                    console.log('H20Synth data:', h2osynthCellData, 'at bar', barNumber, 'cell', cellIndex);
+                }
+                
+                currentIndex++;
+                
+                // Continue looping
+                combinedPlaybackTimer = setTimeout(playNextCell, cellDuration * 1000);
+            }
+            
+            // Start playback
+            playNextCell();
+        }
+        
+        function playBar(barNumber) {
+            const playButton = document.querySelector(`.bar-play-button[data-bar-number="${barNumber}"]`);
+            if (!playButton) return;
+            
+            // Add this bar to active bars
+            activeBars.add(barNumber);
+            
+            // Change button to stop
+            playButton.textContent = '⏹';
+            
+            // If multiple bars are playing, use combined loop
+            if (activeBars.size > 1) {
+                playCombinedLoop();
+            } else {
+                // Single bar playback
+                stopAllPlayback();
+                
+                const cells = getCellsInBarOrder(barNumber);
+                const cellDuration = getCellDuration();
+                let currentIndex = 0;
+                
+                // Mark this bar as playing
+                playbackTimers[barNumber] = true;
+                
+                function playNextCell() {
+                    // Check if playback has been stopped or if we need to switch to combined
+                    if (!playbackTimers[barNumber] || activeBars.size > 1) {
+                        if (activeBars.size > 1) {
+                            playCombinedLoop();
+                        }
+                        return;
+                    }
+                    
+                    // Reset to beginning if we've reached the end (loop)
+                    if (currentIndex >= cells.length) {
+                        currentIndex = 0;
+                    }
+                    
+                    const cell = cells[currentIndex];
+                    
+                    // Add animation class for visual feedback
+                    cell.classList.add('playing');
+                    setTimeout(() => {
+                        cell.classList.remove('playing');
+                    }, 150); // Remove after animation completes
+                    
+                    // Get data from both layers
+                    const { barNumber: cellBarNumber, cellIndex: cellCellIndex } = getCellInfo(cell);
+                    
+                    // Play drum layer
+                    const emojis = getCellEmojis(cellBarNumber, cellCellIndex);
+                    if (window.soundManager && emojis.length > 0) {
+                        emojis.forEach(emoji => {
+                            try {
+                                window.soundManager.playSound(emoji);
+                            } catch (error) {
+                                console.error('Error playing sound:', error);
+                            }
+                        });
+                    }
+                    
+                    // Play H20Synth layer (TODO: implement H20Synth playback)
+                    const h2osynthCellData = getCellH2OSynth(cellBarNumber, cellCellIndex);
+                    if (h2osynthCellData.length > 0) {
+                        // TODO: Play H20Synth sounds
+                        console.log('H20Synth data:', h2osynthCellData, 'at bar', cellBarNumber, 'cell', cellCellIndex);
+                    }
+                    
+                    currentIndex++;
+                    
+                    // Continue looping if playback hasn't been stopped
+                    if (playbackTimers[barNumber] && activeBars.size === 1) {
+                        playbackTimers[barNumber] = setTimeout(playNextCell, cellDuration * 1000);
+                    }
+                }
+                
+                // Start playback
+                playNextCell();
+            }
+        }
+        
+        function stopBar(barNumber) {
+            // Remove from active bars
+            activeBars.delete(barNumber);
+            
+            // Stop individual playback for this bar
+            if (playbackTimers[barNumber]) {
+                if (typeof playbackTimers[barNumber] === 'number') {
+                    clearTimeout(playbackTimers[barNumber]);
+                }
+                delete playbackTimers[barNumber];
+            }
+            
+            const playButton = document.querySelector(`.bar-play-button[data-bar-number="${barNumber}"]`);
+            if (playButton) {
+                playButton.textContent = '▶︎';
+            }
+            
+            // If multiple bars are still playing, restart combined loop
+            if (activeBars.size > 1) {
+                playCombinedLoop();
+            } else if (activeBars.size === 1) {
+                // Only one bar left, switch to individual playback
+                const remainingBar = Array.from(activeBars)[0];
+                stopAllPlayback();
+                playBar(remainingBar);
+            } else {
+                // No bars playing, stop everything
+                stopAllPlayback();
+            }
+        }
+        
+        // Add click handlers for play buttons
+        gridContainer.addEventListener('click', (e) => {
+            const playButton = e.target.closest('.bar-play-button');
+            if (playButton) {
+                const barNumber = parseInt(playButton.dataset.barNumber);
+                if (playButton.textContent === '▶︎') {
+                    playBar(barNumber);
+                } else {
+                    stopBar(barNumber);
+                }
+            }
+        });
+        
+        // Initialize layer display on page load
+        switchLayer(currentLayer);
+        
+        // Initialize sound manager when page loads (after all scripts are loaded)
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.soundManager) {
+                console.log('Initializing SoundManager...');
+                window.soundManager.init();
+            } else {
+                console.error('SoundManager not found on window');
+            }
+        });
+        
+        // Also try immediate initialization if DOM is already loaded
+        if (document.readyState === 'loading') {
+            // DOM is still loading, wait for DOMContentLoaded
+        } else {
+            // DOM is already loaded
+            if (window.soundManager) {
+                console.log('Initializing SoundManager (DOM already loaded)...');
+                window.soundManager.init();
+            }
+        }
+
+        // Initialize music sound manager
+        if (window.musicSoundManager) {
+            window.musicSoundManager.init();
+        }
+
+        // Get scale notes from musicSoundManager
+        const scaleNotes = window.musicSoundManager ? window.musicSoundManager.MAJOR_SCALE_RATIOS : [];
+        const noteButtonsContainer = document.getElementById('note-buttons');
+        const noteButtons = [];
+        const buttonByKey = {};
+        const musicPressedKeys = new Set();
+
+        // Create note buttons
+        if (scaleNotes.length > 0) {
+            scaleNotes.forEach((note, index) => {
+                const button = document.createElement('div');
+                button.className = 'note-button';
+                button.setAttribute('data-note-index', index);
+                button.setAttribute('data-note-key', note.key);
+                
+                const noteName = document.createElement('div');
+                noteName.className = 'note-name';
+                let displayName = note.name.replace('Lower ', '');
+                // Add prime mark for second octave
+                if (note.octave === 1) {
+                    displayName = displayName + "'";
+                }
+                noteName.textContent = displayName;
+                
+                const noteKey = document.createElement('div');
+                noteKey.className = 'note-key';
+                noteKey.textContent = note.key.toUpperCase();
+                
+                button.appendChild(noteName);
+                button.appendChild(noteKey);
+                
+                // Pitch bend parameters
+                const PITCH_BEND_DEAD_ZONE = 8;
+                const PITCH_BEND_MAX = 30;
+                const HALF_STEPS_PER_PERCENT = 0.5 / 10;
+                
+                const getXPosition = (e) => {
+                    if (e.touches && e.touches.length > 0) {
+                        const rect = button.getBoundingClientRect();
+                        if (e.changedTouches && e.changedTouches.length > 0) {
+                            return e.changedTouches[0].clientX - rect.left;
+                        } else if (e.touches.length > 0) {
+                            return e.touches[0].clientX - rect.left;
+                        }
+                    } else {
+                        const rect = button.getBoundingClientRect();
+                        return e.clientX - rect.left;
+                    }
+                };
+                
+                const getYPosition = (e) => {
+                    if (e.touches && e.touches.length > 0) {
+                        const rect = button.getBoundingClientRect();
+                        if (button.userData && button.userData.touchIdentifier !== undefined) {
+                            for (let i = 0; i < e.touches.length; i++) {
+                                if (e.touches[i].identifier === button.userData.touchIdentifier) {
+                                    return e.touches[i].clientY - rect.top;
+                                }
+                            }
+                            return e.touches[0].clientY - rect.top;
+                        } else {
+                            return e.touches[0].clientY - rect.top;
+                        }
+                    } else {
+                        const rect = button.getBoundingClientRect();
+                        return e.clientY - rect.top;
+                    }
+                };
+                
+                const calculatePitchBend = (yPosition) => {
+                    const rect = button.getBoundingClientRect();
+                    const buttonHeight = rect.height;
+                    const buttonCenter = buttonHeight / 2;
+                    const offsetY = yPosition - buttonCenter;
+                    const offsetPercent = (offsetY / buttonHeight) * 100;
+                    
+                    if (Math.abs(offsetPercent) < PITCH_BEND_DEAD_ZONE) {
+                        return 1.0;
+                    }
+                    
+                    const clampedPercent = Math.max(-PITCH_BEND_MAX, Math.min(PITCH_BEND_MAX, offsetPercent));
+                    const effectivePercent = clampedPercent > 0 
+                        ? clampedPercent - PITCH_BEND_DEAD_ZONE 
+                        : clampedPercent + PITCH_BEND_DEAD_ZONE;
+                    
+                    const halfSteps = effectivePercent * HALF_STEPS_PER_PERCENT;
+                    const multiplier = Math.pow(2, halfSteps / 12);
+                    
+                    return multiplier;
+                };
+                
+                const calculateLFORate = (xPosition) => {
+                    const rect = button.getBoundingClientRect();
+                    const buttonWidth = rect.width;
+                    const buttonCenter = buttonWidth / 2;
+                    const offsetX = xPosition - buttonCenter;
+                    const offsetPercent = (offsetX / buttonWidth) * 100;
+                    
+                    // Default LFO rate at center: 0.5 Hz
+                    const DEFAULT_LFO_RATE = 0.5;
+                    const LFO_DEAD_ZONE = 8; // Center ±8% region
+                    const minLFO = 0.2; // Slowest LFO (left side)
+                    const maxLFO = 32.0; // Fastest LFO (right side)
+                    
+                    // If within center ±8% region, return default
+                    if (Math.abs(offsetPercent) < LFO_DEAD_ZONE) {
+                        return DEFAULT_LFO_RATE;
+                    }
+                    
+                    // Map X position to LFO rate
+                    // Left side (negative offset): 0.2 to 0.5 Hz
+                    // Right side (positive offset): 0.5 to 12 Hz
+                    let lfoRate;
+                    if (offsetPercent < 0) {
+                        // Left side: slower LFO (0.2 to 0.5 Hz)
+                        // Map from -100% (left edge) to -8% (dead zone edge) -> 0.2 to 0.5 Hz
+                        const normalizedLeft = Math.abs(offsetPercent + LFO_DEAD_ZONE) / (100 - LFO_DEAD_ZONE); // 0 to 1
+                        lfoRate = DEFAULT_LFO_RATE - normalizedLeft * (DEFAULT_LFO_RATE - minLFO);
+                    } else {
+                        // Right side: faster LFO (0.5 to 12 Hz)
+                        // Map from +8% (dead zone edge) to +100% (right edge) -> 0.5 to 12 Hz
+                        const normalizedRight = (offsetPercent - LFO_DEAD_ZONE) / (100 - LFO_DEAD_ZONE); // 0 to 1
+                        lfoRate = DEFAULT_LFO_RATE + normalizedRight * (maxLFO - DEFAULT_LFO_RATE);
+                    }
+                    
+                    // Clamp to range
+                    return Math.max(minLFO, Math.min(maxLFO, lfoRate));
+                };
+                
+                const handleMove = (e) => {
+                    if (!button.isPressed || !button.userData) return;
+                    e.preventDefault();
+                    
+                    const yPosition = getYPosition(e);
+                    const xPosition = getXPosition(e);
+                    
+                    if (button.userData.isGrowl) {
+                        // Control LFO rate with X position, pitch glide with Y position
+                        const lfoRate = calculateLFORate(xPosition);
+                        const pitchBendMultiplier = calculatePitchBend(yPosition);
+                        
+                        // Update LFO rate
+                        if (button.userData.growlInstance && button.userData.growlInstance.lfo) {
+                            button.userData.growlInstance.lfo.frequency.value = lfoRate;
+                            // Also update gateLFO for stutter growl if it exists
+                            if (button.userData.growlInstance.gateLFO) {
+                                button.userData.growlInstance.gateLFO.frequency.value = lfoRate;
+                            }
+                        }
+                        
+                        // Update pitch glide for growl
+                        if (button.userData.growlInstance && button.userData.growlInstance.updatePitch) {
+                            button.userData.growlInstance.updatePitch(pitchBendMultiplier);
+                        }
+                        
+                        // Also update pitch glide for chord
+                        if (window.musicSoundManager && window.musicSoundManager.updatePitchBend) {
+                            window.musicSoundManager.updatePitchBend(button.userData.noteKey, pitchBendMultiplier);
+                        }
+                    } else {
+                        // Normal pitch bend for chords only
+                        const pitchBendMultiplier = calculatePitchBend(yPosition);
+                        if (window.musicSoundManager && window.musicSoundManager.updatePitchBend) {
+                            window.musicSoundManager.updatePitchBend(button.userData.noteKey, pitchBendMultiplier);
+                        }
+                    }
+                };
+                
+                const handleStart = (e) => {
+                    e.preventDefault();
+                    if (button.isPressed) return;
+                    
+                    // Check X position to determine if touch is in left 30% or right 70% zone
+                    const rect = button.getBoundingClientRect();
+                    const buttonWidth = rect.width;
+                    const xPosition = getXPosition(e);
+                    const xPercent = (xPosition / buttonWidth) * 100;
+                    
+                    const noteIndex = parseInt(button.getAttribute('data-note-index'));
+                    let touchIdentifier = null;
+                    if (e.touches && e.touches.length > 0) {
+                        if (e.changedTouches && e.changedTouches.length > 0) {
+                            touchIdentifier = e.changedTouches[0].identifier;
+                        } else if (e.touches.length > 0) {
+                            touchIdentifier = e.touches[0].identifier;
+                        }
+                    }
+                    
+                    // If touch is in left 30% zone, trigger BOTH growl bass AND chord
+                    if (xPercent < 30) {
+                        button.isPressed = true;
+                        
+                        // Map button index to growl type (8 growl types, cycle through for 16 buttons)
+                        const growlTypes = ['classic', 'wobble', 'roar', 'beast', 'sweep', 'stutter', 'deep', 'aggressive'];
+                        const growlType = growlTypes[index % growlTypes.length];
+                        const growlKey = `growl-${index}-${Date.now()}`;
+                        const noteKey = `note-${index}-${Date.now()}`;
+                        
+                        // Calculate root frequency of the note (same as the lower note of the chord in 70% zone)
+                        let rootFrequency = 55; // Default fallback
+                        if (window.musicSoundManager && window.musicSoundManager.getScaleNoteFrequency) {
+                            rootFrequency = window.musicSoundManager.getScaleNoteFrequency(noteIndex, 0);
+                        }
+                        
+                        rootFrequency = rootFrequency / 4;
+                        
+                        // Initialize audio context and start growl
+                        if (window.initGrowlAudioContext) {
+                            window.initGrowlAudioContext();
+                        }
+                        if (window.ensureGrowlMasterGain) {
+                            window.ensureGrowlMasterGain();
+                        }
+                        
+                        // Start BOTH growl and chord
+                        let growlInstance = null;
+                        if (window.growlSoundCreators && window.growlSoundCreators[growlType]) {
+                            growlInstance = window.growlSoundCreators[growlType](rootFrequency);
+                            growlInstance.start();
+                            
+                            // Set initial LFO rate based on starting X position
+                            const initialXPosition = getXPosition(e);
+                            const initialLFORate = calculateLFORate(initialXPosition);
+                            if (growlInstance.lfo) {
+                                growlInstance.lfo.frequency.value = initialLFORate;
+                                // Also update gateLFO for stutter growl if it exists
+                                if (growlInstance.gateLFO) {
+                                    growlInstance.gateLFO.frequency.value = initialLFORate;
+                                }
+                            }
+                        }
+                        
+                        // Start chord
+                        if (window.musicSoundManager && window.musicSoundManager.startChord) {
+                            window.musicSoundManager.startChord(noteIndex, noteKey);
+                        }
+                        
+                        // Set initial pitch bend for both
+                        const initialYPosition = getYPosition(e);
+                        const initialPitchBend = calculatePitchBend(initialYPosition);
+                        if (growlInstance && growlInstance.updatePitch) {
+                            growlInstance.updatePitch(initialPitchBend);
+                        }
+                        if (window.musicSoundManager && window.musicSoundManager.updatePitchBend) {
+                            window.musicSoundManager.updatePitchBend(noteKey, initialPitchBend);
+                        }
+                        
+                        button.classList.add('active');
+                        button.style.background = '#ff6b00'; // Orange color for growl
+                        button.userData = { 
+                            growlKey, 
+                            growlType, 
+                            growlInstance, 
+                            noteKey,
+                            noteIndex,
+                            touchIdentifier,
+                            isGrowl: true 
+                        };
+                        return;
+                    }
+                    
+                    // Touch is in right 70% zone, proceed with normal chord behavior
+                    button.isPressed = true;
+                    
+                    const noteKey = `note-${index}-${Date.now()}`;
+                    
+                    if (window.musicSoundManager && window.musicSoundManager.startChord) {
+                        window.musicSoundManager.startChord(noteIndex, noteKey);
+                    }
+                    
+                    button.classList.add('active');
+                    button.style.background = '#bd00ff';
+                    button.userData = { noteKey, noteIndex, touchIdentifier, isGrowl: false };
+                    
+                    const yPosition = getYPosition(e);
+                    const pitchBendMultiplier = calculatePitchBend(yPosition);
+                    if (window.musicSoundManager && window.musicSoundManager.updatePitchBend) {
+                        window.musicSoundManager.updatePitchBend(noteKey, pitchBendMultiplier);
+                    }
+                };
+                
+                const handleEnd = (e) => {
+                    e.preventDefault();
+                    if (!button.isPressed) return;
+                    
+                    if (e.changedTouches && e.changedTouches.length > 0 && button.userData) {
+                        const endedTouchIdentifier = e.changedTouches[0].identifier;
+                        if (button.userData.touchIdentifier !== null && 
+                            button.userData.touchIdentifier !== undefined &&
+                            endedTouchIdentifier !== button.userData.touchIdentifier) {
+                            return;
+                        }
+                    }
+                    
+                    button.isPressed = false;
+                    
+                    if (button.userData) {
+                        // Handle growl bass release (if in left 30% zone, both growl and chord are active)
+                        if (button.userData.isGrowl) {
+                            if (button.userData.growlInstance) {
+                                button.userData.growlInstance.stop();
+                            }
+                            // Also stop chord
+                            if (window.musicSoundManager && window.musicSoundManager.updatePitchBend) {
+                                window.musicSoundManager.updatePitchBend(button.userData.noteKey, 1.0);
+                            }
+                            if (window.musicSoundManager && window.musicSoundManager.stopNoteByKey) {
+                                window.musicSoundManager.stopNoteByKey(button.userData.noteKey);
+                            }
+                        }
+                        // Handle normal chord release (right 70% zone)
+                        else if (!button.userData.isGrowl) {
+                            if (window.musicSoundManager && window.musicSoundManager.updatePitchBend) {
+                                window.musicSoundManager.updatePitchBend(button.userData.noteKey, 1.0);
+                            }
+                            if (window.musicSoundManager && window.musicSoundManager.stopNoteByKey) {
+                                window.musicSoundManager.stopNoteByKey(button.userData.noteKey);
+                            }
+                        }
+                        
+                        button.classList.remove('active');
+                        button.style.background = '#2f2f2f';
+                        button.userData = null;
+                    }
+                };
+                
+                button.addEventListener('touchstart', handleStart, { passive: false });
+                button.addEventListener('touchmove', handleMove, { passive: false });
+                button.addEventListener('touchend', handleEnd, { passive: false });
+                button.addEventListener('touchcancel', handleEnd, { passive: false });
+                button.addEventListener('mousedown', handleStart);
+                button.addEventListener('mousemove', handleMove);
+                button.addEventListener('mouseup', handleEnd);
+                button.addEventListener('mouseleave', handleEnd);
+                
+                noteButtonsContainer.appendChild(button);
+                noteButtons.push(button);
+                
+                if (note.key) {
+                    buttonByKey[note.key] = button;
+                }
+            });
+            
+            // Keyboard controls for music notes
+            document.addEventListener('keydown', (event) => {
+                const key = event.key.toLowerCase();
+                const noteIndex = scaleNotes.findIndex(n => n.key === key);
+                
+                if (noteIndex === -1 || musicPressedKeys.has(key)) return;
+                
+                musicPressedKeys.add(key);
+                const noteKey = key;
+                const button = buttonByKey[key];
+                
+                if (button) {
+                    button.classList.add('active');
+                    button.style.background = '#bd00ff';
+                }
+                
+                if (window.musicSoundManager && window.musicSoundManager.startChord) {
+                    window.musicSoundManager.startChord(noteIndex, noteKey);
+                }
+            });
+            
+            document.addEventListener('keyup', (event) => {
+                const key = event.key.toLowerCase();
+                const noteIndex = scaleNotes.findIndex(n => n.key === key);
+                
+                if (noteIndex === -1) return;
+                
+                musicPressedKeys.delete(key);
+                const button = buttonByKey[key];
+                
+                if (button) {
+                    button.classList.remove('active');
+                    button.style.background = '#2f2f2f';
+                }
+                
+                if (window.musicSoundManager && window.musicSoundManager.stopNoteByKey) {
+                    window.musicSoundManager.stopNoteByKey(key);
+                }
+            });
+            
+            // Stop all music notes if window loses focus
+            window.addEventListener('blur', () => {
+                if (window.musicSoundManager && window.musicSoundManager.stopAllNotes) {
+                    window.musicSoundManager.stopAllNotes();
+                }
+                musicPressedKeys.clear();
+                noteButtons.forEach(button => {
+                    button.classList.remove('active');
+                    button.style.background = '#2f2f2f';
+                    button.userData = null;
+                    button.isPressed = false;
+                });
+            });
+        }
+    </script>
+</body>
+</html>
