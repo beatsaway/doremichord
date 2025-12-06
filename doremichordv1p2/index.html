@@ -1055,6 +1055,106 @@
                 font-size: 28px;
             }
         }
+
+        /* Touch Indicators */
+        #hold-indicator {
+            position: fixed;
+            font-size: 64px;
+            pointer-events: none;
+            z-index: 2500;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+            user-select: none;
+            transform: translate(-40%, -10%);
+            will-change: top, left;
+        }
+
+        #hold-indicator.visible {
+            opacity: 1;
+            animation: pulse 0.6s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: translate(-40%, -10%) scale(1);
+            }
+            50% {
+                transform: translate(-40%, -10%) scale(1.2);
+            }
+        }
+
+        .touch-indicator {
+            position: fixed;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #ffd700;
+            border: 2px solid #ffed4e;
+            pointer-events: none;
+            z-index: 2499;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+            transform: translate(-50%, -50%);
+            will-change: top, left;
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+        }
+
+        .touch-indicator.visible {
+            opacity: 1;
+        }
+
+        /* Toggle Switch Styles */
+        .toggle-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #3a3a3a;
+        }
+
+        .toggle-label {
+            font-size: 16px;
+            font-weight: 500;
+            color: #b0b0b0;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .toggle-label {
+                font-size: 15px;
+            }
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 28px;
+            background: #3a3a3a;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: #bd00ff;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 24px;
+            height: 24px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(22px);
+        }
     </style>
 </head>
 <body>
@@ -1164,8 +1264,16 @@
                     <span id="key-value">C4</span>
                 </div>
             </div>
+            <div class="toggle-container">
+                <label class="toggle-label" for="touch-indicator-toggle">Show Touch Indicators</label>
+                <div class="toggle-switch" id="touch-indicator-toggle"></div>
+            </div>
         </div>
     </div>
+
+    <!-- Touch Indicators -->
+    <div id="hold-indicator">👆</div>
+    <div id="touch-indicators-container"></div>
 
     <!-- Sound files -->
     <script src="ss_kick.js"></script>
@@ -1806,6 +1914,138 @@
         // Update BPM value display
         bpmSlider.addEventListener('input', (e) => {
             bpmValue.textContent = e.target.value;
+        });
+
+        // Touch Indicators Functionality
+        let touchIndicatorsEnabled = true; // Default enabled
+        const holdIndicator = document.getElementById('hold-indicator');
+        const touchIndicatorsContainer = document.getElementById('touch-indicators-container');
+        const activeTouchIndicators = new Map(); // Map of touch identifier -> indicator element
+        const touchIndicatorToggle = document.getElementById('touch-indicator-toggle');
+
+        // Load saved preference from localStorage
+        const savedPreference = localStorage.getItem('touchIndicatorsEnabled');
+        if (savedPreference !== null) {
+            touchIndicatorsEnabled = savedPreference === 'true';
+        }
+        if (touchIndicatorsEnabled) {
+            touchIndicatorToggle.classList.add('active');
+        }
+
+        // Toggle functionality
+        touchIndicatorToggle.addEventListener('click', () => {
+            touchIndicatorsEnabled = !touchIndicatorsEnabled;
+            if (touchIndicatorsEnabled) {
+                touchIndicatorToggle.classList.add('active');
+            } else {
+                touchIndicatorToggle.classList.remove('active');
+                // Hide all indicators when disabled
+                if (holdIndicator) {
+                    holdIndicator.classList.remove('visible');
+                }
+                activeTouchIndicators.forEach(indicator => {
+                    indicator.classList.remove('visible');
+                });
+            }
+            // Save preference
+            localStorage.setItem('touchIndicatorsEnabled', touchIndicatorsEnabled.toString());
+        });
+
+        // Helper function to update touch indicators
+        function updateTouchIndicators(e) {
+            if (!touchIndicatorsEnabled) return;
+            if (!e.touches) return;
+            
+            // Update emoji indicator for first touch
+            if (holdIndicator && e.touches.length > 0) {
+                holdIndicator.style.left = e.touches[0].clientX + 'px';
+                holdIndicator.style.top = e.touches[0].clientY + 'px';
+                holdIndicator.classList.add('visible');
+            } else if (holdIndicator && e.touches.length === 0) {
+                holdIndicator.classList.remove('visible');
+            }
+            
+            // Create/update yellow circles for touches 2, 3, 4, etc.
+            const currentTouchIds = new Set();
+            
+            // Process all current touches
+            for (let i = 0; i < e.touches.length; i++) {
+                const touch = e.touches[i];
+                currentTouchIds.add(touch.identifier);
+                
+                // First touch uses emoji, skip it
+                if (i === 0) continue;
+                
+                // Get or create indicator for this touch
+                let indicator = activeTouchIndicators.get(touch.identifier);
+                if (!indicator) {
+                    indicator = document.createElement('div');
+                    indicator.className = 'touch-indicator';
+                    touchIndicatorsContainer.appendChild(indicator);
+                    activeTouchIndicators.set(touch.identifier, indicator);
+                }
+                
+                // Update position
+                indicator.style.left = touch.clientX + 'px';
+                indicator.style.top = touch.clientY + 'px';
+                indicator.classList.add('visible');
+            }
+            
+            // Remove indicators for touches that are no longer active
+            for (const [touchId, indicator] of activeTouchIndicators.entries()) {
+                if (!currentTouchIds.has(touchId)) {
+                    indicator.classList.remove('visible');
+                    // Remove from DOM after transition
+                    setTimeout(() => {
+                        if (indicator.parentNode) {
+                            indicator.parentNode.removeChild(indicator);
+                        }
+                        activeTouchIndicators.delete(touchId);
+                    }, 150);
+                }
+            }
+        }
+
+        // Mouse events (single touch simulation)
+        document.addEventListener('mousedown', (e) => {
+            if (!touchIndicatorsEnabled) return;
+            if (holdIndicator) {
+                holdIndicator.style.left = e.clientX + 'px';
+                holdIndicator.style.top = e.clientY + 'px';
+                holdIndicator.classList.add('visible');
+            }
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (!touchIndicatorsEnabled) return;
+            if (holdIndicator && holdIndicator.classList.contains('visible')) {
+                holdIndicator.style.left = e.clientX + 'px';
+                holdIndicator.style.top = e.clientY + 'px';
+            }
+        });
+        
+        document.addEventListener('mouseup', () => {
+            if (!touchIndicatorsEnabled) return;
+            if (holdIndicator) {
+                holdIndicator.classList.remove('visible');
+            }
+        });
+        
+        // Touch events (multi-touch support)
+        document.addEventListener('touchstart', (e) => {
+            updateTouchIndicators(e);
+        });
+        
+        document.addEventListener('touchmove', (e) => {
+            updateTouchIndicators(e);
+        });
+        
+        document.addEventListener('touchend', (e) => {
+            updateTouchIndicators(e);
+        });
+        
+        document.addEventListener('touchcancel', (e) => {
+            updateTouchIndicators(e);
         });
         
         // Initialize BPM value
